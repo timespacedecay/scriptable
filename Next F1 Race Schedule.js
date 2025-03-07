@@ -220,22 +220,5 @@ cell[1][4].text = await formatSessionDay(raceDateTime)
 cell[2][4].text = await formatSessionDate(raceDateTime)
 cell[3][4].text = await formatSessionTime(raceDateTime)
           
-    
-
-///    for (i = 0; i < 7; i++) {
-///        const looser = data.loosers[i];
-///        let row = leftColumn.addText(`
-///            ${looser.ticker} 
-///            ${looser.change}
-///        `);
-///        row.font = Font.semiboldSystemFont(14);
-///    }
-
-    let gradient = new LinearGradient()
-    
-    gradient.colors = [new Color("3a8cc1"), new Color("00A9D6")];
-    gradient.locations =  [0, 1];
-    
-    widget.backgroundGradient = gradient
-    return widget;
+return widget;
 }
