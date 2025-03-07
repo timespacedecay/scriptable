@@ -1,0 +1,1 @@
+A collection of Scriptable scripts/widgets, written by me or modified by me from others' work (always cited).
