@@ -60,13 +60,7 @@ async function createWidget() {
 
     headerCell.addSpacer()
     //headerStack.addSpacer(2) // between cells
-    
-    //let titleRow = widget.addText(race.raceName.toUpperCase());
-    //titleRow.font = titleFont;
-    //titleRow.textColor = Color.white();
-    //titleRow.minimumScaleFactor = .1;
     widget.addSpacer(4);
-
 
     let body = widget.addStack()
 	body.layoutVertically()
@@ -88,7 +82,6 @@ async function createWidget() {
         //currentRow.addSpacer()
       
         cell[i] = []
-
         for(let k=0; k<maxColumns; k++){
 			//keep the cells all the same height
             let currentCell = currentRow.addStack()
@@ -113,10 +106,8 @@ async function createWidget() {
             cell[i][k].centerAlignText()
             cell[i][k].font = bodyFont
             cell[i][k].textColor = Color.white()
-            cell[i][k].text = "cell["+i+"]["+k+"]"
             cell[i][k].lineLimit = 1
             cell[i][k].minimumScaleFactor = .2
-            
             
             //right spacer for cell text-line
             cellTextLine.addSpacer()
@@ -137,7 +128,6 @@ async function createWidget() {
 
 	//bottom spacer after last row
 	//body.addSpacer()
-
 
     if (Object.hasOwn(race, "Sprint")) {
         fp2sq = "SQ"
@@ -196,7 +186,6 @@ async function createWidget() {
 	cell[3][0].text = await formatSessionTime(fp1DateTime)
 
 	cell[0][1].text = await fp2sq
-	//   cell[0][1].minimumScaleFactor = .6
 	cell[1][1].text = await formatSessionDay(fp2sprintQDateTime)
 	cell[2][1].text = await formatSessionDate(fp2sprintQDateTime)
 	cell[3][1].text = await formatSessionTime(fp2sprintQDateTime)
