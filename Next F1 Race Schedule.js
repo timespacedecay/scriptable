@@ -3,13 +3,13 @@
 // icon-color: red; icon-glyph: flag-checkered;
 const dataUrl = "https://api.jolpi.ca/ergast/f1/current/next.json";
 const raceIdx = 0
-
-// for testing// 
+//// for testing
 // const dataUrl = "https://api.jolpi.ca/ergast/f1/current/races.json";// 
 // const raceIdx = 4
 
 let widget = await createWidget();
 Script.setWidget(widget);
+//// for testing
 // widget.presentMedium() //Small,Medium,Large,ExtraLarge   
 Script.complete();
 
