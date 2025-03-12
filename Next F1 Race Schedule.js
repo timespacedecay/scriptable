@@ -153,31 +153,31 @@ async function createWidget() {
 
     if (fp1DateTime < now) {
         for(let i=0; i<maxRows; i++) { 
-            cell[i][0].textColor = Color.gray()
+            cell[i][0].textOpacity = .5
         }
     }
 
     if (fp2sprintQDateTime < now) {
         for(let i=0; i<maxRows; i++) { 
-            cell[i][1].textColor = Color.gray()
+            cell[i][1].textOpacity = .5
         }
     }
     
     if (fp3sprintDateTime < now) {
         for(let i=0; i<maxRows; i++) { 
-            cell[i][2].textColor = Color.gray()
+            cell[i][2].textOpacity = .5
         }
     }
     
     if (qualiDateTime < now) {
         for(let i=0; i<maxRows; i++) { 
-            cell[i][3].textColor = Color.gray()
+            cell[i][3].textOpacity = .5
         }
     }
 
     if (raceDateTime < now) {
         for(let i=0; i<maxRows; i++) { 
-            cell[i][4].textColor = Color.gray()
+            cell[i][4].textOpacity = .5
         }
     }
 
