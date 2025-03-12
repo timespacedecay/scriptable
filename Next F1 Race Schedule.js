@@ -1,6 +1,11 @@
 // Variables used by Scriptable.
 // These must be at the very top of the file. Do not edit.
 // icon-color: red; icon-glyph: flag-checkered;
+
+// Citation and thank yous to the following:
+// Scriptable table setup modified from /u/wherebdbooty from this post on reddit: https://old.reddit.com/r/Scriptable/comments/121ewyg/working_with_stacks/jdnsl82/
+// F1 race data from the great project jolpica-f1, which took over where ergast left off. Check out that project here: https://github.com/jolpica/jolpica-f1
+
 const dataUrl = "https://api.jolpi.ca/ergast/f1/current/next.json";
 const raceIdx = 0
 //// for testing
