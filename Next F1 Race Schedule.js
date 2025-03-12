@@ -206,7 +206,7 @@ async function createWidget() {
 	cell[2][2].text = await formatSessionDate(fp3sprintDateTime)
 	cell[3][2].text = await formatSessionTime(fp3sprintDateTime)
 
-	cell[0][3].text = "Quali"
+	cell[0][3].text = "Qual"
 	cell[1][3].text = await formatSessionDay(qualiDateTime)
 	cell[2][3].text = await formatSessionDate(qualiDateTime)
 	cell[3][3].text = await formatSessionTime(qualiDateTime)
