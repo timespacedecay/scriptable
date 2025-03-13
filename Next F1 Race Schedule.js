@@ -18,7 +18,7 @@ let options = {
     font:{
         header:	["HiraginoSans-W7", 10],
         title:	["HiraginoSans-W6", 9],
-        body:	["HiraginoSans-W3", 9]
+        body:	["HiraginoSans-W4", 9]
     },
     // Edit this for column resize
     padding:{
