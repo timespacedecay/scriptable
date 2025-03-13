@@ -22,8 +22,8 @@ let options = {
     },
     // Edit this for column resize
     padding:{
-        left:	-5,
-        right:	-4.5
+        left:	-4,
+        right:	-4
     },
     spaceBetweenRows: 2,
     spaceBetweenColumns: 0
