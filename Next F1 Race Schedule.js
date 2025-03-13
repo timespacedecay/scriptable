@@ -34,7 +34,7 @@ function finished(time){	return time<now?.5:1	}
 let widget = await createWidget();
 Script.setWidget(widget);
 //// for testing
-widget.presentMedium() //Small,Medium,Large,ExtraLarge   
+widget.presentAccessoryRectangular(); 
 Script.complete();
 
 async function formatSessionDay(sessionDay) {
