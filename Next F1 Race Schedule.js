@@ -2,20 +2,42 @@
 // These must be at the very top of the file. Do not edit.
 // icon-color: red; icon-glyph: flag-checkered;
 
-// Citation and thank yous to the following:
-// Scriptable table setup modified from /u/wherebdbooty from this post on reddit: https://old.reddit.com/r/Scriptable/comments/121ewyg/working_with_stacks/jdnsl82/
+// Citation and thank yous:
+// This script is now co-authored. by the great /u/wherebdbooty, to whom i can't thank enough! 
+// Their massive code rewrite taught me so much and allowed me to really dial in the aesthics of the widget. 
+// Thank you /u/wherebdbooty!  Check out their github and version here: https://github.com/wherebdbooty/F1Race-Schedule/blob/main/main.js
 // F1 race data from the great project jolpica-f1, which took over where ergast left off. Check out that project here: https://github.com/jolpica/jolpica-f1
 
 const dataUrl = "https://api.jolpi.ca/ergast/f1/current/next.json";
 const raceIdx = 0
-//// for testing
+const now = new Date()
+
+//// for testing// 
 // const dataUrl = "https://api.jolpi.ca/ergast/f1/current/races.json";// 
-// const raceIdx = 4
+// const raceIdx = 6
+
+let options = {
+    width: 170,
+    font:{
+        header:	["HiraginoSans-W7", 10],
+        title:	["HiraginoSans-W6", 9],
+        body:	["HiraginoSans-W3", 9]
+    },
+    // Edit this for column resize
+    padding:{
+        left:	-5,
+        right:	-4.5
+    },
+    spaceBetweenRows: 2,
+    spaceBetweenColumns: 0
+}
+
+function finished(time){	return time<now?.5:1	}
 
 let widget = await createWidget();
 Script.setWidget(widget);
 //// for testing
-// widget.presentMedium() //Small,Medium,Large,ExtraLarge   
+widget.presentMedium() //Small,Medium,Large,ExtraLarge   
 Script.complete();
 
 async function formatSessionDay(sessionDay) {
@@ -34,181 +56,111 @@ async function formatSessionTime(sessionTime) {
 }
 
 async function createWidget() {
-    const widget = new ListWidget();
-    const data = await new Request(dataUrl).loadJSON();
-    const race = data.MRData.RaceTable.Races[raceIdx]
-    const raceDateTime = new Date(`${race.date}T${race.time}`)
+	const widget = new ListWidget();
+	const data = await new Request(dataUrl).loadJSON();
+	const race = data.MRData.RaceTable.Races[raceIdx]
+	const raceDateTime = new Date(`${race.date}T${race.time}`)
 	const fp1 = race.FirstPractice
-    const fp1DateTime = new Date(`${fp1.date}T${fp1.time}`)
-    const quali = race.Qualifying
-    const qualiDateTime = new Date(`${quali.date}T${quali.time}`)
-    const now = new Date()
-    let headerFont = new Font("Hiragino Sans W7", 16)
-    let titleFont = new Font("Hiragino Sans W7", 10)
-    let bodyFont = new Font("Hiragino Sans W6", 10)
+	const fp1DateTime = new Date(`${fp1.date}T${fp1.time}`)
+	const quali = race.Qualifying
+	const qualiDateTime = new Date(`${quali.date}T${quali.time}`)
 
-    const headerStack = widget.addStack()
-    headerStack.layoutHorizontally()
-    const headerText = race.raceName.toUpperCase()
-    const headerCell = headerStack.addStack()
-    headerCell.layoutHorizontally()
-    //headerCell.backgroundColor = HEADER_COLOR
-    headerCell.size = new Size(175,0)
-    headerCell.addSpacer()
-    //headerCell.lineLimit = 1
-      
-    const textElement = headerCell.addText(headerText)
-	textElement.centerAlignText()
-    textElement.font = headerFont
-    textElement.minimumScaleFactor = .1
-    textElement.lineLimit = 1
+	let sprintQ, fp2sprintQDateTime, sprint, fp3sprintDateTime, fp2, fp3, sprintOrSP, isSprint = Object.hasOwn(race,'Sprint')
 
-    headerCell.addSpacer()
-    //headerStack.addSpacer(2) // between cells
-    widget.addSpacer(4);
+	let dateTime = []
+		dateTime[0] = {
+			title: 'FP1',
+			day:	await formatSessionDay(fp1DateTime),
+			date:	await formatSessionDate(fp1DateTime),
+			time:	await formatSessionTime(fp1DateTime),
+			raw:	fp1DateTime
+		}
 
-    let body = widget.addStack()
-	body.layoutVertically()
-	//change: width,height (0 = auto size)
-	body.size = new Size(175,0)
-	body.cornerRadius = 1
-	//body.borderWidth = 1
-	//body.borderColor = Color.red()
-	//top spacer before first row
-	//body.addSpacer()
-    
-    let cell = [], maxRows = 4, maxColumns = 5
-    
-    for(let i=0; i<maxRows; i++){
-        let currentRow = body.addStack()
-        currentRow.layoutHorizontally()
-    
-        //left spacer before first column
-        //currentRow.addSpacer()
-      
-        cell[i] = []
-        for(let k=0; k<maxColumns; k++){
-			//keep the cells all the same height
-            let currentCell = currentRow.addStack()
-			//vertically arrange padding,text-line,padding
-			currentCell.layoutVertically()
-			//top spacer above cell text
-			//currentCell.addSpacer()
-			//currentCell.borderWidth = 1
-			//currentCell.borderColor = Color.yellow()
-			//currentCell.backgroundColor = (i+k)%2?Color.gray():Color.white()
-        
-            //textLine stack: spacer,text,spacer; keep text centered
-            let cellTextLine = currentCell.addStack()
-			cellTextLine.layoutHorizontally()
-			//cellTextLine.borderWidth=1
-			//cellTextLine.borderColor=Color.cyan()
-			//left spacer for cell text-line
-			cellTextLine.addSpacer()
-        
-            //text in the cell
-            cell[i][k] = cellTextLine.addText("")
-            cell[i][k].centerAlignText()
-            cell[i][k].font = bodyFont
-            cell[i][k].textColor = Color.white()
-            cell[i][k].lineLimit = 1
-            cell[i][k].minimumScaleFactor = .2
-            
-            //right spacer for cell text-line
-            cellTextLine.addSpacer()
-        
-            //bottom spacer below cell text
-            //currentCell.addSpacer()
-        
-            //1px spacer between columns
-			//if(k<maxColumns) currentRow.addSpacer(1)
-          }
-    
-      //right spacer after last column
-      //currentRow.addSpacer()
-    
-      //1px space between rows
-      if(i<maxRows) body.addSpacer(4)
-    }
+		sprintOrSP = isSprint?race.SprintQualifying:race.SecondPractice
+		fp2sprintQDateTime = new Date(`${sprintOrSP.date}T${sprintOrSP.time}`)
 
-	//bottom spacer after last row
-	//body.addSpacer()
+		dateTime[1] = {
+			title:	isSprint?'SQ':'FP2',
+			day:	await formatSessionDay(fp2sprintQDateTime),
+			date:	await formatSessionDate(fp2sprintQDateTime),
+			time:	await formatSessionTime(fp2sprintQDateTime),
+			raw:	fp2sprintQDateTime
+		}
 
-    if (Object.hasOwn(race, "Sprint")) {
-        fp2sq = "SQ"
-        sprintQ = race.SprintQualifying
-        fp2sprintQDateTime = new Date(`${sprintQ.date}T${sprintQ.time}`)
-        fp3sprint = "SPR"
-        sprint = race.Sprint
-        fp3sprintDateTime = new Date(`${sprint.date}T${sprint.time}`)
-    } else {
-        fp2sq = "FP2"
-        fp2 = race.SecondPractice
-        fp2sprintQDateTime = new Date(`${fp2.date}T${fp2.time}`)
-        fp3sprint = "FP3"
-        fp3 = race.ThirdPractice
-        fp3sprintDateTime = new Date(`${fp3.date}T${fp3.time}`)
-    }
+		sprintOrSP = isSprint?race.Sprint:race.ThirdPractice
+		fp3sprintDateTime = new Date(`${sprintOrSP.date}T${sprintOrSP.time}`)
 
+		dateTime[2]= {
+			title:	isSprint?'SPR':'FP3',
+			day:	await formatSessionDay(fp3sprintDateTime),
+			date:	await formatSessionDate(fp3sprintDateTime),
+			time:	await formatSessionTime(fp3sprintDateTime),
+			raw:	fp3sprintDateTime
+		}
 
-    if (fp1DateTime < now) {
-        for(let i=0; i<maxRows; i++) { 
-            cell[i][0].textOpacity = .5
-        }
-    }
+		dateTime[3] = {
+			title:	'Quali',
+			day:	await formatSessionDay(qualiDateTime),
+			date:	await formatSessionDate(qualiDateTime),
+			time:	await formatSessionTime(qualiDateTime),
+			raw:	qualiDateTime
+		}
+		dateTime[4] = {
+			title:	'Race',
+			day:	await formatSessionDay(raceDateTime),
+			date:	await formatSessionDate(raceDateTime),
+			time:	await formatSessionTime(raceDateTime),
+			raw:	raceDateTime
+		}
 
-    if (fp2sprintQDateTime < now) {
-        for(let i=0; i<maxRows; i++) { 
-            cell[i][1].textOpacity = .5
-        }
-    }
-    
-    if (fp3sprintDateTime < now) {
-        for(let i=0; i<maxRows; i++) { 
-            cell[i][2].textOpacity = .5
-        }
-    }
-    
-    if (qualiDateTime < now) {
-        for(let i=0; i<maxRows; i++) { 
-            cell[i][3].textOpacity = .5
-        }
-    }
+	const headerStack = widget.addStack()
+	const headerText = race.raceName.toUpperCase()
+	const headerCell = headerStack.addStack()
+		  //headerCell.backgroundColor = HEADER_COLOR
+		  headerCell.size = new Size(options.width,0)
+		  headerCell.addSpacer()
 
-    if (raceDateTime < now) {
-        for(let i=0; i<maxRows; i++) { 
-            cell[i][4].textOpacity = .5
-        }
-    }
+		  const textElement = headerCell.addText(headerText)
+				textElement.font = new Font(...options.font.header)
+				textElement.minimumScaleFactor = 0.5
+				textElement.lineLimit = 1
 
-	for(let k=0; k<maxColumns; k++) { 
-	cell[0][k].font = titleFont
+		  headerCell.addSpacer()
+
+	widget.addSpacer(options.spaceBetweenRows)
+
+	let body = widget.addStack()
+		//change: width,height (0 = auto size)
+		body.size = new Size(options.width,0)
+// 		body.cornerRadius = 1
+
+	for(let column=0; column<dateTime.length; column++){
+		let currentColumn = body.addStack()
+			currentColumn.layoutVertically()
+
+			//adjust column padding
+			currentColumn.setPadding(0,options.padding.left,0,options.padding.right)
+
+		for(let row in dateTime[column]){
+			if(row=='raw') continue
+			let currentCell = currentColumn.addStack()
+				//left side spacer for Text
+				currentCell.addSpacer()
+			let cellText = currentCell.addText(dateTime[column][row])
+				//if row==0, use title font, else use body font
+				cellText.font = row=='title'?new Font(...options.font.title):new Font(...options.font.body)
+				cellText.textColor = Color.white()
+				cellText.lineLimit = 1
+				cellText.minimumScaleFactor = .5
+				cellText.textOpacity = finished(dateTime[column].raw)
+			//right side spacer for Text
+			currentCell.addSpacer()
+            //space between title, fp2, etc
+            currentColumn.addSpacer(options.spaceBetweenRows)
+		}
+        //space bewtween columns
+		currentColumn.addSpacer(options.spaceBetweenColumns)
 	}
 
-	cell[0][0].text = "FP1"
-	cell[1][0].text = await formatSessionDay(fp1DateTime)
-	cell[2][0].text = await formatSessionDate(fp1DateTime)
-	cell[3][0].text = await formatSessionTime(fp1DateTime)
-
-	cell[0][1].text = await fp2sq
-	cell[1][1].text = await formatSessionDay(fp2sprintQDateTime)
-	cell[2][1].text = await formatSessionDate(fp2sprintQDateTime)
-	cell[3][1].text = await formatSessionTime(fp2sprintQDateTime)
-
-	cell[0][2].text = await fp3sprint
-	cell[1][2].text = await formatSessionDay(fp3sprintDateTime)
-	cell[2][2].text = await formatSessionDate(fp3sprintDateTime)
-	cell[3][2].text = await formatSessionTime(fp3sprintDateTime)
-
-	cell[0][3].text = "Qual"
-	cell[1][3].text = await formatSessionDay(qualiDateTime)
-	cell[2][3].text = await formatSessionDate(qualiDateTime)
-	cell[3][3].text = await formatSessionTime(qualiDateTime)
-
-	cell[0][4].text = "Race"
-	cell[1][4].text = await formatSessionDay(raceDateTime)
-	cell[2][4].text = await formatSessionDate(raceDateTime)
-	cell[3][4].text = await formatSessionTime(raceDateTime)
-
-    return widget;
+	return widget;
 }
