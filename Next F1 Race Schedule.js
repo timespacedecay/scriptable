@@ -146,7 +146,7 @@ async function createWidget() {
 			let cellText = currentCell.addText(dateTime[column][row])
 				//if row==0, use title font, else use body font
 				cellText.font = row=='title'?new Font(...options.font.title):new Font(...options.font.body)
-				cellText.textColor = Color.white()
+				// cellText.textColor = Color.white()
 				cellText.lineLimit = 1
 				cellText.minimumScaleFactor = .5
 				cellText.textOpacity = finished(dateTime[column].raw)
