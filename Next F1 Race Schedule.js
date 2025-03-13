@@ -3,7 +3,6 @@
 // icon-color: red; icon-glyph: flag-checkered;
 
 // Citation and thank yous:
-// Bhg thank you to the great /u/wherebdbooty, to whom i can't thank enough!
 // F1 race data from the great project jolpica-f1, which took over where ergast left off. Check out that project here: https://github.com/jolpica/jolpica-f1
 
 const dataUrl = "https://api.jolpi.ca/ergast/f1/current/next.json";
