@@ -3,9 +3,7 @@
 // icon-color: red; icon-glyph: flag-checkered;
 
 // Citation and thank yous:
-// This script is now co-authored. by the great /u/wherebdbooty, to whom i can't thank enough! 
-// Their massive code rewrite taught me so much and allowed me to really dial in the aesthics of the widget. 
-// Thank you /u/wherebdbooty!  Check out their github and version here: https://github.com/wherebdbooty/F1Race-Schedule/blob/main/main.js
+// Bhg thank you to the great /u/wherebdbooty, to whom i can't thank enough!
 // F1 race data from the great project jolpica-f1, which took over where ergast left off. Check out that project here: https://github.com/jolpica/jolpica-f1
 
 const dataUrl = "https://api.jolpi.ca/ergast/f1/current/next.json";
