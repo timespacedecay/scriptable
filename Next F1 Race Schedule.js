@@ -5,29 +5,45 @@
 // Citation and thank yous:
 // F1 race data from the great project jolpica-f1, which took over where ergast left off. Check out that project here: https://github.com/jolpica/jolpica-f1
 
-const dataUrl = "https://api.jolpi.ca/ergast/f1/current/next.json";
-const raceIdx = 0
 const now = new Date()
+
+const options = {
+	//version is "User-Agent"
+	version: "Scriptable: NextF1RaceSchedule/3.0",
+	dataUrl: "https://api.jolpi.ca/ergast/f1/current/next.json",
+	raceIdx: 0,
+	width: 170,
+	font:{
+		header:	["HiraginoSans-W7", 10],
+		title:	["HiraginoSans-W6", 9],
+		body:	["HiraginoSans-W4", 9]
+	},
+	// Edit this for column resize
+	padding:{
+		left:	-4,
+		right:	-4
+	},
+	spaceBetweenRows: 2,
+	spaceBetweenColumns: 0,
+	//adjustable refresh time (less than 60 is ignored)
+	refreshLimitInMinutes: 60
+}
+
+//save cached data to 'Scriptable/f1RaceData/schedule.txt'
+
+let FM
+
+try { FM = FileManager.iCloud() }
+catch {FM = FileManager.local()}
+
+if(!FM.fileExists(FM.documentsDirectory()+'/f1RaceData/'))
+	FM.createDirectory(FM.documentsDirectory()+'/f1RaceData/')
+let filePath=FM.documentsDirectory()+'/f1RaceData/schedule.txt'
+
 
 //// for testing// 
 // const dataUrl = "https://api.jolpi.ca/ergast/f1/current/races.json";// 
 // const raceIdx = 6
-
-let options = {
-    width: 170,
-    font:{
-        header:	["HiraginoSans-W7", 10],
-        title:	["HiraginoSans-W6", 9],
-        body:	["HiraginoSans-W4", 9]
-    },
-    // Edit this for column resize
-    padding:{
-        left:	-4,
-        right:	-4
-    },
-    spaceBetweenRows: 2,
-    spaceBetweenColumns: 0
-}
 
 function finished(time){	return time<now?.5:1	}
 
@@ -36,6 +52,38 @@ Script.setWidget(widget);
 //// for testing
 widget.presentAccessoryRectangular(); 
 Script.complete();
+
+//Cache data
+function cacheRaceData(dataObject){
+    console.log('caching new race data...')
+    dataObject.lastUpdate = now
+    FM.writeString(filePath, JSON.stringify(dataObject))
+}
+
+//API call limiter
+//uses getTime()/1000/60 to check if it's been at least 60 minutes since last update
+async function getRaceData(){
+	let temp, _rlim = options.refreshLimitInMinutes<60?60:options.refreshLimitInMinutes
+	if(FM.fileExists(filePath)){
+		temp = FM.downloadFileFromiCloud(filePath)
+		temp = FM.readString(filePath)
+		temp = JSON.parse(temp)
+		//if time elapsed is less than 1 hour, use cache
+		if(Math.abs((new Date(temp.lastUpdate)).getTime()/1000/60 - now.getTime()/1000/60)<_rlim){
+			//console.log('using cached data...')
+			return temp
+		}
+	}
+
+	//if time elapsed is 1+ hours, use API
+	//console.log('calling API...')
+	temp = new Request(options.dataUrl)
+	//added a header to show updated widget users
+	temp.headers = {"User-Agent":options.version}
+	temp = await temp.loadJSON()
+	cacheRaceData(temp)
+	return temp
+}
 
 async function formatSessionDay(sessionDay) {
     var options = { weekday: 'short' };
@@ -54,8 +102,8 @@ async function formatSessionTime(sessionTime) {
 
 async function createWidget() {
 	const widget = new ListWidget();
-	const data = await new Request(dataUrl).loadJSON();
-	const race = data.MRData.RaceTable.Races[raceIdx]
+	const data = await getRaceData()	//await new Request(options.dataUrl).loadJSON();
+	const race = data.MRData.RaceTable.Races[options.raceIdx]
 	const raceDateTime = new Date(`${race.date}T${race.time}`)
 	const fp1 = race.FirstPractice
 	const fp1DateTime = new Date(`${fp1.date}T${fp1.time}`)
@@ -129,7 +177,7 @@ async function createWidget() {
 	let body = widget.addStack()
 		//change: width,height (0 = auto size)
 		body.size = new Size(options.width,0)
-// 		body.cornerRadius = 1
+		//body.cornerRadius = 1
 
 	for(let column=0; column<dateTime.length; column++){
 		let currentColumn = body.addStack()
