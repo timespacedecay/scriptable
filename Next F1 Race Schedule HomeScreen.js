@@ -46,6 +46,7 @@ const widget = await createWidget();
 // --------------------------------------------------
 // 3) Show menu so user can choose what to do
 // --------------------------------------------------
+if (!(config.runsInWidget)) {
 const menu = new Alert();
 menu.title = "F1 Race Schedule";
 menu.message = "Choose an action:";
@@ -86,7 +87,11 @@ switch (selection) {
 
 // If you didn't choose "Set Widget & Exit", let's just end:
 Script.complete();
-
+} else {
+    // Set as the widget for the Home Screen
+        Script.setWidget(widget);
+        Script.complete();
+}
 /** 
  * Creates the main F1 schedule widget.
  */
