@@ -20,7 +20,7 @@ const fm = FileManager.local();
 // If you want to store the script in iCloud, you can do:
 // if (fm.isFileStoredIniCloud(scriptPath)) fm = FileManager.iCloud();
 
-const UPDATE_URL = "https://raw.githubusercontent.com/timespacedecay/scriptable/refs/heads/main/Next%20F1%20Race%20Schedule%20v2%20HS.js";
+const UPDATE_URL = "https://raw.githubusercontent.com/timespacedecay/scriptable/refs/heads/main/Next%20F1%20Race%20Schedule%20HomeScreen.js";
 
 // Widget layout options
 let options = {
