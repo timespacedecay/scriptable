@@ -8,7 +8,7 @@
 // --------------------------------------------------
 // 1) Constants & Setup
 // --------------------------------------------------
-const SCRIPT_VERSION = "1.0";
+const SCRIPT_VERSION = "1.1";
 const DATA_URL = "https://api.jolpi.ca/ergast/f1/current/next.json";
 const RACE_IDX = 0;
 const now = new Date();
@@ -229,7 +229,7 @@ async function getData() {
     // Otherwise, fetch fresh data
     const req = new Request(DATA_URL);
     req.headers = {
-        "User-Agent": `Scriptable: F1RaceSchedule/${SCRIPT_VERSION}`
+        "User-Agent": `Scriptable: NextF1RaceScheduleHomeScreen/${SCRIPT_VERSION}`
     };
     const data = await req.loadJSON();
 
