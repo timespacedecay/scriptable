@@ -53,7 +53,8 @@ menu.message = "Choose an action:";
 menu.addAction("Preview Small");
 menu.addAction("Preview Medium");
 menu.addAction("Preview Large");
-menu.addAction("Update Code");
+menu.addAction("Set Widget");
+menu.addAction("Update Script");
 menu.addCancelAction("Cancel");
 
 const selection = await menu.presentAlert();
