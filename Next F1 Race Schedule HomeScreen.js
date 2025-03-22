@@ -49,9 +49,9 @@ if (!(config.runsInWidget)) {
 const menu = new Alert();
 menu.title = "F1 Race Schedule";
 menu.message = "Choose an action:";
-menu.addAction("Preview Small");
-menu.addAction("Preview Medium");
-menu.addAction("Preview Large");
+menu.addAction("Preview Lock Screen");
+menu.addAction("Preview HS Medium");
+menu.addAction("Preview HS Large");
 menu.addAction("Set Widget");
 menu.addAction("Update Script");
 menu.addCancelAction("Cancel");
@@ -60,15 +60,15 @@ const selection = await menu.presentAlert();
 
 switch (selection) {
     case 0:
-        // Preview small
-        await widget.presentSmall();
+        // Preview lock screen
+        await widget.presentAccessoryRectangular(); 
         break;
     case 1:
-        // Preview medium
+        // Preview home screen medium
         await widget.presentMedium();
         break;
     case 2:
-        // Preview large
+        // Preview home screen large
         await widget.presentLarge();
         break;
     case 3:
