@@ -47,7 +47,7 @@ const widget = await createWidget();
 // --------------------------------------------------
 // 3) Show menu so user can choose what to do
 // --------------------------------------------------
-if (!(config.runsInWidget)) {
+if (config.runsInApp) {
 const menu = new Alert();
 menu.title = "F1 Race Schedule";
 menu.message = "Choose an action:";
