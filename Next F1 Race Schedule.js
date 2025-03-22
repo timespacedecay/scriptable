@@ -21,7 +21,7 @@ const fm = FileManager.local();
 // if (fm.isFileStoredIniCloud(scriptPath)) fm = FileManager.iCloud();
 
 // Get widget parameters - set in "Parameters" field when adding widget to home screen
-// Expected format "locale|refreshInterval|paddingLeft|paddingRight|spaceBetweenRows|spaceBetweenColumns"
+// Expected format "locale|AMPM(true/false)|refreshInterval(in mins)|widgetWidth|paddingLeft|paddingRight|spaceBetweenRows|spaceBetweenColumns"
 // Defaults will be used if no parameters set, or a parameter value is missing
 // Examples
 //    "en-GB|90|-8|-8|4|2"
@@ -31,22 +31,23 @@ const prms = (args.widgetParameter || "").split("|");
 
 // Widget layout options
 let options = {
-    width: 170,
+    width: parseInt(prms[3] || 170),
     font: {
         header: ["HiraginoSans-W7", 10],
         title: ["HiraginoSans-W6", 9],
         body: ["HiraginoSans-W4", 9]
     },
     padding: {
-        left: parseInt(prms[2] || -4),
-        right: parseInt(prms[3] || -4)
+        left: parseInt(prms[4] || -4),
+        right: parseInt(prms[5] || -4)
     },
-    spaceBetweenRows: parseInt(prms[4] || 2),
-    spaceBetweenColumns: parseInt(prms[5] || 0),
+    spaceBetweenRows: parseInt(prms[6] || 2),
+    spaceBetweenColumns: parseInt(prms[7] || 0),
+    //date and time format
+    locale: prms[0] || "en-US",
+    timeAMPM: prms[1] || "false",
     //adjustable refresh time (less than 60 is ignored)
-	refreshLimitInMinutes: parseInt(prms[1] || 60),
-    //date format
-    locale: prms[0] || "en-US"
+    refreshLimitInMinutes: parseInt(prms[2] || 60)
 };
 
 // --------------------------------------------------
@@ -279,7 +280,7 @@ async function formatSessionDate(sessionDate) {
  * Format time (e.g. "14:00")
  */
 async function formatSessionTime(sessionTime) {
-    return sessionTime.toLocaleTimeString(options.locale, { hour12: false, hour: "2-digit", minute: "2-digit" });
+    return sessionTime.toLocaleTimeString(options.locale, { hour12: false, hour: "numeric", minute: "numeric" });
 }
 
 /**
