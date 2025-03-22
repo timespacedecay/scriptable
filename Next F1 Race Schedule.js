@@ -24,9 +24,9 @@ const fm = FileManager.local();
 // Expected format "locale|AMPM(true/false)|refreshInterval(in mins)|widgetWidth|paddingLeft|paddingRight|spaceBetweenRows|spaceBetweenColumns"
 // Defaults will be used if no parameters set, or a parameter value is missing
 // Examples
-//    "en-GB|90|-8|-8|4|2"
 //    "en-GB"
-//    "en-GB|90|||4|2"
+//    "en-UK|false|90|170|-3|-3|1|1"
+//    "en-GB||120||||4|2"
 const prms = (args.widgetParameter || "").split("|");
 
 // Widget layout options
