@@ -21,12 +21,12 @@ const fm = FileManager.local();
 // if (fm.isFileStoredIniCloud(scriptPath)) fm = FileManager.iCloud();
 
 // Get widget parameters - set in "Parameters" field when adding widget to home screen
-// Expected format "locale|AMPM(true/false)|refreshInterval(in mins)|widgetWidth|paddingLeft|paddingRight|spaceBetweenRows|spaceBetweenColumns"
+// Expected format "locale|AMPM(true/false)|refreshInterval(in mins)|widgetWidth|paddingLeft|paddingRight|spaceBetweenRows|spaceBetweenColumns|raceTitleFontSize|sessionTitleFontSize|sessionFontSize"
 // Defaults will be used if no parameters set, or a parameter value is missing
 // Examples
 //    Great Britain date format: en-GB
 //    US date format but AM/PM time: |true
-//    Make medium home screen widget look better: |||350|-5|-5|7.5
+//    Make medium home screen widget look better: |||350|-5|-5|7.5||22|18|18
 //    en-UK|false|90|170|-3|-3|1|1
 //    en-GB||120||||4|2
 const prms = (args.widgetParameter || "").split("|");
@@ -35,9 +35,9 @@ const prms = (args.widgetParameter || "").split("|");
 let options = {
     width: parseInt(prms[3] || 170),
     font: {
-        header: ["HiraginoSans-W7", 10],
-        title: ["HiraginoSans-W6", 9],
-        body: ["HiraginoSans-W4", 9]
+        header: ["HiraginoSans-W7", parseInt(prms[8] || 10)],
+        title: ["HiraginoSans-W6", parseInt(prms[9] || 9)],
+        body: ["HiraginoSans-W4", parseInt(prms[10] || 9)]
     },
     padding: {
         left: parseInt(prms[4] || -4),
