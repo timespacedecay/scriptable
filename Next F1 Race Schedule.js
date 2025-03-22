@@ -2,24 +2,32 @@
 // icon-color: red; icon-glyph: flag-checkered;
 // Acknowledgements:
 // F1 race data from the great project jolpica-f1, which took over where ergast left off. https://github.com/jolpica/jolpica-f1
-// Nodman for adding caching and ability to update the script. https://github.com/Nodman
+// @Nodman for adding caching and ability to update the script. https://github.com/Nodman
+// @ianperrin for widget parameters. https://github.com/ianperrin
 
 // --------------------------------------------------
 // 1) Constants & Setup - DO NOT EDIT
 // --------------------------------------------------
-const SCRIPT_VERSION = "4.0";
+const SCRIPT_VERSION = "4.1";
 const DATA_URL = "https://api.jolpi.ca/ergast/f1/current/next.json";
 const RACE_IDX = 0;
 const now = new Date();
+const UPDATE_URL = "https://raw.githubusercontent.com/timespacedecay/scriptable/refs/heads/main/Next%20F1%20Race%20Schedule.js";
 
 // Paths and file manager
 const scriptPath = module.filename;
 const fm = FileManager.local();
-
 // If you want to store the script in iCloud, you can do:
 // if (fm.isFileStoredIniCloud(scriptPath)) fm = FileManager.iCloud();
 
-const UPDATE_URL = "https://raw.githubusercontent.com/timespacedecay/scriptable/refs/heads/main/Next%20F1%20Race%20Schedule.js";
+// Get widget parameters - set in "Parameters" field when adding widget to home screen
+// Expected format "locale|refreshInterval|paddingLeft|paddingRight|spaceBetweenRows|spaceBetweenColumns"
+// Defaults will be used if no parameters set, or a parameter value is missing
+// Examples
+//    "en-GB|90|-8|-8|4|2"
+//    "en-GB"
+//    "en-GB|90|||4|2"
+const prms = (args.widgetParameter || "").split("|");
 
 // Widget layout options
 let options = {
@@ -30,13 +38,15 @@ let options = {
         body: ["HiraginoSans-W4", 9]
     },
     padding: {
-        left: -4,
-        right: -4
+        left: parseInt(prms[2] || -4),
+        right: parseInt(prms[3] || -4)
     },
-    spaceBetweenRows: 2,
-    spaceBetweenColumns: 0,
+    spaceBetweenRows: parseInt(prms[4] || 2),
+    spaceBetweenColumns: parseInt(prms[5] || 0),
     //adjustable refresh time (less than 60 is ignored)
-	refreshLimitInMinutes: 60
+	refreshLimitInMinutes: parseInt(prms[1] || 60),
+    //date format
+    locale: prms[0] || "en-US"
 };
 
 // --------------------------------------------------
@@ -255,21 +265,21 @@ async function getData() {
  * Format day (e.g. "Mon")
  */
 async function formatSessionDay(sessionDay) {
-    return sessionDay.toLocaleDateString("en-US", { weekday: "short" });
+    return sessionDay.toLocaleDateString(options.locale, { weekday: "short" });
 }
 
 /**
  * Format date (e.g. "4/15")
  */
 async function formatSessionDate(sessionDate) {
-    return sessionDate.toLocaleDateString("en-US", { month: "numeric", day: "numeric" });
+    return sessionDate.toLocaleDateString(options.locale, { month: "numeric", day: "numeric" });
 }
 
 /**
  * Format time (e.g. "14:00")
  */
 async function formatSessionTime(sessionTime) {
-    return sessionTime.toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" });
+    return sessionTime.toLocaleTimeString(options.locale, { hour12: false, hour: "2-digit", minute: "2-digit" });
 }
 
 /**
