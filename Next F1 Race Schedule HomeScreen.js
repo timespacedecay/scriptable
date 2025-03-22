@@ -3,38 +3,53 @@
 // Acknowledgements:
 // F1 race data from the great project jolpica-f1, which took over where ergast left off. https://github.com/jolpica/jolpica-f1
 // Nodman for adding caching and ability to update the script. https://github.com/Nodman
+// ianperrin for widget parameters. https://github.com/ianperrin
 
 // --------------------------------------------------
-// 1) Constants & Setup
+// 1) Constants & Setup - DO NOT EDIT
 // --------------------------------------------------
-const SCRIPT_VERSION = "3.0";
+const SCRIPT_VERSION = "4.1";
 const DATA_URL = "https://api.jolpi.ca/ergast/f1/current/next.json";
 const RACE_IDX = 0;
 const now = new Date();
+const UPDATE_URL = "https://raw.githubusercontent.com/timespacedecay/scriptable/refs/heads/main/Next%20F1%20Race%20Schedule.js";
 
 // Paths and file manager
 const scriptPath = module.filename;
 const fm = FileManager.local();
-
 // If you want to store the script in iCloud, you can do:
 // if (fm.isFileStoredIniCloud(scriptPath)) fm = FileManager.iCloud();
 
-const UPDATE_URL = "https://raw.githubusercontent.com/timespacedecay/scriptable/refs/heads/main/Next%20F1%20Race%20Schedule%20HomeScreen.js";
+// Get widget parameters - set in "Parameters" field when adding widget to home screen
+// Expected format "locale|AMPM(true/false)|refreshInterval(in mins)|widgetWidth|paddingLeft|paddingRight|spaceBetweenRows|spaceBetweenColumns|raceTitleFontSize|sessionTitleFontSize|sessionFontSize"
+// Defaults will be used if no parameters set, or a parameter value is missing
+// Examples
+//    Great Britain date format: en-GB
+//    US date format but AM/PM time: |true
+//    Make medium home screen widget look better: |||350|-5|-5|7.5||22|18|18
+//    en-UK|false|90|170|-3|-3|1|1
+//    en-GB||120||||4|2
+const prms = (args.widgetParameter || "").split("|");
 
 // Widget layout options
 let options = {
-    width: 350,
+    width: parseInt(prms[3] || 350),
     font: {
-        header: ["HiraginoSans-W7", 22],
-        title: ["HiraginoSans-W6", 18],
-        body: ["HiraginoSans-W4", 18]
+        header: ["HiraginoSans-W7", parseInt(prms[8] || 22)],
+        title: ["HiraginoSans-W6", parseInt(prms[9] || 18)],
+        body: ["HiraginoSans-W4", parseInt(prms[10] || 18)]
     },
     padding: {
-        left: -5,
-        right: -4.5
+        left: parseInt(prms[4] || -5),
+        right: parseInt(prms[5] || -5)
     },
-    spaceBetweenRows: 7.5,
-    spaceBetweenColumns: 0
+    spaceBetweenRows: parseInt(prms[6] || 7.5),
+    spaceBetweenColumns: parseInt(prms[7] || 0),
+    //date and time format
+    locale: prms[0] || "en-US",
+    timeAMPM: prms[1] || "false",
+    //adjustable refresh time (less than 60 is ignored)
+    refreshLimitInMinutes: parseInt(prms[2] || 60)
 };
 
 // --------------------------------------------------
@@ -72,7 +87,7 @@ switch (selection) {
         await widget.presentLarge();
         break;
     case 3:
-        // Set as the widget for the Home Screen
+        // Set as the widget for the Lock Screen
         Script.setWidget(widget);
         Script.complete();
         return;
@@ -88,7 +103,7 @@ switch (selection) {
 // If you didn't choose "Set Widget & Exit", let's just end:
 Script.complete();
 } else {
-    // Set as the widget for the Home Screen
+    // Set as the widget for the Lock Screen
         Script.setWidget(widget);
         Script.complete();
 }
@@ -98,7 +113,6 @@ Script.complete();
 async function createWidget() {
     const w = new ListWidget();
     const data = await getData(); // uses caching + headers
-
     const race = data.MRData.RaceTable.Races[RACE_IDX];
     const raceDateTime = new Date(`${race.date}T${race.time}`);
     const fp1 = race.FirstPractice;
@@ -214,13 +228,13 @@ function finished(time) {
 async function getData() {
     const cachePath = fm.joinPath(fm.cacheDirectory(), "f1DataCache.json");
     const nowMs = Date.now();
-
+    let _rlim = options.refreshLimitInMinutes<60?60:options.refreshLimitInMinutes
     // Try reading from cache
     if (fm.fileExists(cachePath)) {
         try {
             const cached = JSON.parse(fm.readString(cachePath));
             const ageMs = nowMs - cached.timestamp;
-            if (ageMs < 60 * 60 * 1000) { // 1 hour
+            if (ageMs < _rlim) { // 1 hour or more
                 console.log("Using cached data");
                 return cached.data;
             } else {
@@ -234,7 +248,7 @@ async function getData() {
     // Otherwise, fetch fresh data
     const req = new Request(DATA_URL);
     req.headers = {
-        "User-Agent": `Scriptable: NextF1RaceScheduleHomeScreen/${SCRIPT_VERSION}`
+        "User-Agent": `Scriptable: NextF1RaceSchedule/${SCRIPT_VERSION}`
     };
     const data = await req.loadJSON();
 
@@ -254,21 +268,21 @@ async function getData() {
  * Format day (e.g. "Mon")
  */
 async function formatSessionDay(sessionDay) {
-    return sessionDay.toLocaleDateString("en-US", { weekday: "short" });
+    return sessionDay.toLocaleDateString(options.locale, { weekday: "short" });
 }
 
 /**
  * Format date (e.g. "4/15")
  */
 async function formatSessionDate(sessionDate) {
-    return sessionDate.toLocaleDateString("en-US", { month: "numeric", day: "numeric" });
+    return sessionDate.toLocaleDateString(options.locale, { month: "numeric", day: "numeric" });
 }
 
 /**
  * Format time (e.g. "14:00")
  */
 async function formatSessionTime(sessionTime) {
-    return sessionTime.toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" });
+    return sessionTime.toLocaleTimeString(options.locale, { hour12: false, hour: "numeric", minute: "numeric" });
 }
 
 /**
