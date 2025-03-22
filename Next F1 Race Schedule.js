@@ -76,7 +76,7 @@ switch (selection) {
         await widget.presentLarge();
         break;
     case 3:
-        // Set as the widget for the Home Screen
+        // Set as the widget for the Lock Screen
         Script.setWidget(widget);
         Script.complete();
         return;
@@ -92,7 +92,7 @@ switch (selection) {
 // If you didn't choose "Set Widget & Exit", let's just end:
 Script.complete();
 } else {
-    // Set as the widget for the Home Screen
+    // Set as the widget for the Lock Screen
         Script.setWidget(widget);
         Script.complete();
 }
@@ -237,7 +237,7 @@ async function getData() {
     // Otherwise, fetch fresh data
     const req = new Request(DATA_URL);
     req.headers = {
-        "User-Agent": `Scriptable: NextF1RaceScheduleHomeScreen/${SCRIPT_VERSION}`
+        "User-Agent": `Scriptable: NextF1RaceSchedule/${SCRIPT_VERSION}`
     };
     const data = await req.loadJSON();
 
