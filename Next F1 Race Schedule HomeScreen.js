@@ -1,7 +1,7 @@
 // Variables used by Scriptable.
 // icon-color: red; icon-glyph: flag-checkered;
 
-// Citation and thank yous:
+// Acknowledgements:
 // F1 race data from the great project jolpica-f1, which took over where ergast left off. https://github.com/jolpica/jolpica-f1
 // Nodman for adding caching and ability to update the script. https://github.com/Nodman
 
