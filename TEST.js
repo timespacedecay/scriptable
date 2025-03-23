@@ -315,7 +315,7 @@ async function updateScript() {
         const req = new Request(UPDATE_URL);
         const newCode = await req.loadString();
         fm.writeString(scriptPath, newCode);
-        updateMessage = "Code updated. Close & reopen the script to see changes.";
+        updateMessage = "Code updated to version " + SCRIPT_VERSION + ". Close & reopen the script to see changes.";
     } catch (error) {
         updateMessage = `Update failed. ${error}`;
     }
