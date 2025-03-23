@@ -12,7 +12,7 @@ const SCRIPT_VERSION = "TEST 1.0";
 const DATA_URL = "https://api.jolpi.ca/ergast/f1/current/next.json";
 const RACE_IDX = 0;
 const now = new Date();
-const UPDATE_URL = "https://raw.githubusercontent.com/timespacedecay/scriptable/refs/heads/main/Next%20F1%20Race%20Schedule.js";
+const UPDATE_URL = "https://raw.githubusercontent.com/timespacedecay/scriptable/refs/heads/main/TEST.js";
 const widgetsize = {
     lock: config.widgetFamily === "accessoryRectangular",
     small: config.widgetFamily === "small"
