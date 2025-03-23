@@ -8,7 +8,7 @@
 // --------------------------------------------------
 // 1) Constants & Setup - DO NOT EDIT
 // --------------------------------------------------
-const SCRIPT_VERSION = "4.1";
+const SCRIPT_VERSION = "4.2";
 const DATA_URL = "https://api.jolpi.ca/ergast/f1/current/next.json";
 const RACE_IDX = 0;
 const now = new Date();
@@ -33,17 +33,17 @@ const prms = (args.widgetParameter || "").split("|");
 
 // Widget layout options
 let options = {
-    width: parseInt(prms[3] || 170),
+    width: parseInt(prms[3] || config.widgetFamily === "accessoryRectangular" ? 170 : 350),
     font: {
-        header: ["HiraginoSans-W7", parseInt(prms[8] || 10)],
-        title: ["HiraginoSans-W6", parseInt(prms[9] || 9)],
-        body: ["HiraginoSans-W4", parseInt(prms[10] || 9)]
+        header: ["HiraginoSans-W7", parseInt(prms[8] || config.widgetFamily === "accessoryRectangular" ? 10 : 22)],
+        title: ["HiraginoSans-W6", parseInt(prms[9] || config.widgetFamily === "accessoryRectangular" ? 9 : 18)],
+        body: ["HiraginoSans-W4", parseInt(prms[10] || config.widgetFamily === "accessoryRectangular" ? 9 : 18)]
     },
     padding: {
-        left: parseInt(prms[4] || -4),
-        right: parseInt(prms[5] || -4)
+        left: parseInt(prms[4] || config.widgetFamily === "accessoryRectangular" ? -4 : -5),
+        right: parseInt(prms[5] || config.widgetFamily === "accessoryRectangular" ? -4 : -5)
     },
-    spaceBetweenRows: parseInt(prms[6] || 2),
+    spaceBetweenRows: parseInt(prms[6] || config.widgetFamily === "accessoryRectangular" ? 2 : 7.5),
     spaceBetweenColumns: parseInt(prms[7] || 0),
     //date and time format
     locale: prms[0] || "en-US",
