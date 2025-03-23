@@ -228,7 +228,7 @@ function finished(time) {
 async function getData() {
     const cachePath = fm.joinPath(fm.cacheDirectory(), "f1DataCache.json");
     const nowMs = Date.now();
-    let _rlim = options.refreshLimitInMinutes<60?60:options.refreshLimitInMinutes
+    let _rlim = options.refreshLimitInMinutes < 60 ? 60 * 60 * 1000 : options.refreshLimitInMinutes * 60 * 1000
     // Try reading from cache
     if (fm.fileExists(cachePath)) {
         try {
