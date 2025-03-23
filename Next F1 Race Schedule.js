@@ -24,15 +24,13 @@ const fm = FileManager.local();
 // If you want to store the script in iCloud, you can do:
 // if (fm.isFileStoredIniCloud(scriptPath)) fm = FileManager.iCloud();
 
-// Get widget parameters - set in "Parameters" field when adding widget to home screen
-// Expected format "locale|AMPM(true/false)|refreshInterval(in mins)|widgetWidth|paddingLeft|paddingRight|spaceBetweenRows|spaceBetweenColumns|raceTitleFontSize|sessionTitleFontSize|sessionFontSize"
-// Defaults will be used if no parameters set, or a parameter value is missing
-// Examples
-//    Great Britain date format: en-GB
-//    US date format but AM/PM time: |true
-//    Make medium home screen widget look better: |||350|-5|-5|7.5||22|18|18
-//    en-UK|false|90|170|-3|-3|1|1
-//    en-GB||120||||4|2
+// Get widget parameters - set your parameters in the "Parameters" field when adding widget to home screen (or tap and hold widget > edit widget).
+// Parameters must be in this order/format "locale|AMPM(AMPM/or blank)|refreshInterval(in minutes)|widgetWidth|paddingLeft|paddingRight|spaceBetweenRows|spaceBetweenColumns|raceTitleFontSize|sessionTitleFontSize|sessionFontSize"
+// Defaults will be used if no parameters set, or a parameter value is missing.
+// Examples:
+//    UK date format: en-UK
+//    US date format but AM/PM time: |AMPM
+//    Refresh data every 12 hours instead of every hour (will still fade past sessions, this just sets the interval to check the API for schedule info): ||720
 const prms = (args.widgetParameter || "").split("|");
 
 // Widget layout options
