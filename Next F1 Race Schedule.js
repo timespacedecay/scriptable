@@ -47,7 +47,7 @@ let options = {
     spaceBetweenColumns: parseInt(prms[7] || 0),
     //date and time format
     locale: prms[0] || "en-US",
-    timeAMPM: prms[1] || "false",
+    timeAMPM: prms[1] === "true" ? true : false || false,
     //adjustable refresh time (less than 60 is ignored)
     refreshLimitInMinutes: parseInt(prms[2] || 60)
 };
@@ -282,7 +282,7 @@ async function formatSessionDate(sessionDate) {
  * Format time (e.g. "14:00")
  */
 async function formatSessionTime(sessionTime) {
-    return sessionTime.toLocaleTimeString(options.locale, { hour12: false, hour: "numeric", minute: "numeric" });
+    return sessionTime.toLocaleTimeString(options.locale, { hour12: options.timeAMPM, hour: "numeric", minute: "numeric" });
 }
 
 /**
