@@ -8,11 +8,15 @@
 // --------------------------------------------------
 // 1) Constants & Setup - DO NOT EDIT
 // --------------------------------------------------
-const SCRIPT_VERSION = "4.3";
+const SCRIPT_VERSION = "4.4";
 const DATA_URL = "https://api.jolpi.ca/ergast/f1/current/next.json";
 const RACE_IDX = 0;
 const now = new Date();
 const UPDATE_URL = "https://raw.githubusercontent.com/timespacedecay/scriptable/refs/heads/main/Next%20F1%20Race%20Schedule.js";
+const widgetsize = {
+    lock: config.widgetFamily === "accessoryRectangular",
+    small: config.widgetFamily === "small"
+};
 
 // Paths and file manager
 const scriptPath = module.filename;
@@ -33,21 +37,21 @@ const prms = (args.widgetParameter || "").split("|");
 
 // Widget layout options
 let options = {
-    width: parseInt(prms[3] || config.widgetFamily === "accessoryRectangular" ? 170 : 350),
+    width: !!parseInt(prms[3]) ? parseInt(prms[3]) : widgetsize.lock ? 170 : widgetsize.small ? 170 : 350,
     font: {
-        header: ["HiraginoSans-W7", parseInt(prms[8] || config.widgetFamily === "accessoryRectangular" ? 10 : 22)],
-        title: ["HiraginoSans-W6", parseInt(prms[9] || config.widgetFamily === "accessoryRectangular" ? 9 : 18)],
-        body: ["HiraginoSans-W4", parseInt(prms[10] || config.widgetFamily === "accessoryRectangular" ? 9 : 18)]
+        header: ["HiraginoSans-W7", !!parseInt(prms[8]) ? parseInt(prms[8]) : widgetsize.lock ? 10  : widgetsize.small ? 12 : 22],
+        title: ["HiraginoSans-W6", !!parseInt(prms[9]) ? parseInt(prms[9]) : widgetsize.lock ? 9 : widgetsize.small ? 10 : 18],
+        body: ["HiraginoSans-W4", !!parseInt(prms[10]) ? parseInt(prms[10]) : widgetsize.lock ? 9 : widgetsize.small ? 10 : 18]
     },
     padding: {
-        left: parseInt(prms[4] || config.widgetFamily === "accessoryRectangular" ? -4 : -5),
-        right: parseInt(prms[5] || config.widgetFamily === "accessoryRectangular" ? -4 : -5)
+        left: !!parseInt(prms[4]) ? parseInt(prms[4]) : widgetsize.lock ? -4 : widgetsize.small ? -4 : -5,
+        right: parseInt(prms[5] || widgetsize.lock ? -4 : widgetsize.small ? -4 : -5)
     },
-    spaceBetweenRows: parseInt(prms[6] || config.widgetFamily === "accessoryRectangular" ? 2 : 7.5),
-    spaceBetweenColumns: parseInt(prms[7] || 0),
+    spaceBetweenRows: !!parseInt(prms[6]) ? parseInt(prms[6]) : widgetsize.lock ? 2 : widgetsize.small ? 10 : 7.5,
+    spaceBetweenColumns: parseInt(prms[7]) || 0,
     //date and time format
     locale: prms[0] || "en-US",
-    timeAMPM: prms[1] === "true" ? true : false || false,
+    timeAMPM: prms[1] == "AMPM" ? true : false,
     //adjustable refresh time (less than 60 is ignored)
     refreshLimitInMinutes: parseInt(prms[2] || 60)
 };
