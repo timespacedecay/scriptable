@@ -8,7 +8,7 @@
 // --------------------------------------------------
 // 1) Constants & Setup - DO NOT EDIT
 // --------------------------------------------------
-const SCRIPT_VERSION = "TEST";
+const SCRIPT_VERSION = "TEST 1.0";
 const DATA_URL = "https://api.jolpi.ca/ergast/f1/current/next.json";
 const RACE_IDX = 0;
 const now = new Date();
