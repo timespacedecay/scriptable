@@ -8,15 +8,11 @@
 // --------------------------------------------------
 // 1) Constants & Setup - DO NOT EDIT
 // --------------------------------------------------
-const SCRIPT_VERSION = "4.4";
+const SCRIPT_VERSION = "4.5";
 const DATA_URL = "https://api.jolpi.ca/ergast/f1/current/next.json";
 const RACE_IDX = 0;
 const now = new Date();
 const UPDATE_URL = "https://raw.githubusercontent.com/timespacedecay/scriptable/refs/heads/main/Next%20F1%20Race%20Schedule.js";
-const widgetsize = {
-    lock: config.widgetFamily === "accessoryRectangular",
-    small: config.widgetFamily === "small"
-};
 
 // Paths and file manager
 const scriptPath = module.filename;
@@ -32,26 +28,31 @@ const fm = FileManager.local();
 //    US date format but AM/PM time: |AMPM
 //    Refresh data every 12 hours instead of every hour (will still fade past sessions, this just sets the interval to check the API for schedule info): ||720
 const prms = (args.widgetParameter || "").split("|");
-
+const familyPrms = {
+    accessoryRectangular: "en-US||60|170|-4|-4|2|0|10|9|9",
+    small: "en-US||60|170|-4|-4|10|0|12|10|10",
+    medium: "en-US||60|350|-5|-5|7.5|0|22|18|18",
+    large: "en-US||60|350|-5|-5|7.5|0|22|18|18"
+}
+const family = config.widgetFamily || "accessoryRectangular"
+const defaultPrms = familyPrms[family].split("|")
 // Widget layout options
-let options = {
-    width: !!parseInt(prms[3]) ? parseInt(prms[3]) : widgetsize.lock ? 170 : widgetsize.small ? 170 : 350,
+options = {
+    width: parseInt(prms[3] || defaultPrms[3]),
     font: {
-        header: ["HiraginoSans-W7", !!parseInt(prms[8]) ? parseInt(prms[8]) : widgetsize.lock ? 10  : widgetsize.small ? 12 : 22],
-        title: ["HiraginoSans-W6", !!parseInt(prms[9]) ? parseInt(prms[9]) : widgetsize.lock ? 9 : widgetsize.small ? 10 : 18],
-        body: ["HiraginoSans-W4", !!parseInt(prms[10]) ? parseInt(prms[10]) : widgetsize.lock ? 9 : widgetsize.small ? 10 : 18]
+        header: ["HiraginoSans-W7", parseInt(prms[8] || defaultPrms[8])],
+        title: ["HiraginoSans-W6", parseInt(prms[9] || defaultPrms[9])],
+        body: ["HiraginoSans-W4", parseInt(prms[10] || defaultPrms[10])]
     },
     padding: {
-        left: !!parseInt(prms[4]) ? parseInt(prms[4]) : widgetsize.lock ? -4 : widgetsize.small ? -4 : -5,
-        right: parseInt(prms[5] || widgetsize.lock ? -4 : widgetsize.small ? -4 : -5)
+        left: parseInt(prms[4] || defaultPrms[4]),
+        right: parseInt(prms[5] || defaultPrms[5])
     },
-    spaceBetweenRows: !!parseInt(prms[6]) ? parseInt(prms[6]) : widgetsize.lock ? 2 : widgetsize.small ? 10 : 7.5,
-    spaceBetweenColumns: parseInt(prms[7]) || 0,
-    //date and time format
-    locale: prms[0] || "en-US",
-    timeAMPM: prms[1] == "AMPM" ? true : false,
-    //adjustable refresh time (less than 60 is ignored)
-    refreshLimitInMinutes: parseInt(prms[2] || 60)
+    spaceBetweenRows: parseInt(prms[6] || defaultPrms[6]),
+    spaceBetweenColumns: parseInt(prms[7] || defaultPrms[7]),
+    locale: parseInt(prms[0] || defaultPrms[0]),
+    timeAMPM: (prms[1] || defaultPrms[1]) == "AMPM",
+    refreshLimitInMinutes: parseInt(prms[2] || defaultPrms[2])
 };
 
 // --------------------------------------------------
@@ -67,6 +68,7 @@ const menu = new Alert();
 menu.title = "F1 Race Schedule";
 menu.message = "Choose an action:";
 menu.addAction("Preview Lock Screen");
+menu.addAction("Preview HS Small");
 menu.addAction("Preview HS Medium");
 menu.addAction("Preview HS Large");
 menu.addAction("Set Widget");
@@ -81,19 +83,23 @@ switch (selection) {
         await widget.presentAccessoryRectangular(); 
         break;
     case 1:
+        // Preview home screen small
+        await widget.presentSmall();
+        break;
+    case 2:
         // Preview home screen medium
         await widget.presentMedium();
         break;
-    case 2:
+    case 3:
         // Preview home screen large
         await widget.presentLarge();
         break;
-    case 3:
+    case 4:
         // Set as the widget for the Lock Screen
         Script.setWidget(widget);
         Script.complete();
         return;
-    case 4:
+    case 5:
         // Update script code
         await updateScript();
         break;
