@@ -37,7 +37,7 @@ const familyPrms = {
 const family = config.widgetFamily || "accessoryRectangular"
 const defaultPrms = familyPrms[family].split("|")
 // Widget layout options
-options = {
+const options = {
     width: parseInt(prms[3] || defaultPrms[3]),
     font: {
         header: ["HiraginoSans-W7", parseInt(prms[8] || defaultPrms[8])],
