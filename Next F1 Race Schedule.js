@@ -8,7 +8,7 @@
 // --------------------------------------------------
 // Constants & Setup - DO NOT EDIT
 // --------------------------------------------------
-const SCRIPT_VERSION = "4.5";
+const SCRIPT_VERSION = "4.6";
 const DATA_URL = "https://api.jolpi.ca/ergast/f1/current/next.json";
 const RACE_IDX = 0;
 const now = new Date();
@@ -118,7 +118,13 @@ if (config.runsInApp) {
 async function createWidget() {
     const w = new ListWidget();
     const data = await getData(); // uses caching + headers
-    const race = data.MRData.RaceTable.Races[RACE_IDX];
+    const alldata = await getAllData(); // uses caching + headers
+    let race = data.MRData.RaceTable.Races[RACE_IDX];
+    let raceDateTimeCheck = new Date(`${race.date}T${race.time}`)
+    let raceRound = race.round
+	if (raceDateTimeCheck + 120 * 60 * 1000 < now) {
+        race = alldata.MRData.RaceTable.Races[raceRound]
+    }
     const raceDateTime = new Date(`${race.date}T${race.time}`);
     const fp1 = race.FirstPractice;
     const fp1DateTime = new Date(`${fp1.date}T${fp1.time}`);
@@ -303,6 +309,48 @@ async function getData() {
             console.error("Unable to fetch data or read from cache: ", error);
         }
     }
+}
+
+/**
+ * Returns ALL RACE data from cache if <1hr old, otherwise fetch with custom headers.
+ */
+async function getAllData() {
+    const cachePath = fm.joinPath(fm.cacheDirectory(), "f1AllRaceDataCache.json");
+    const nowMs = Date.now();
+    let _rlim = options.refreshLimitInMinutes < 60 ? 60 * 60 * 1000 : options.refreshLimitInMinutes * 60 * 1000
+    // Try reading from cache
+    if (fm.fileExists(cachePath)) {
+        try {
+            const cached = JSON.parse(fm.readString(cachePath));
+            const ageMs = nowMs - cached.timestamp;
+            if (ageMs < _rlim) { // 1 hour or more
+                console.log("Using cached data for next race schedule.");
+                return cached.data;
+            } else {
+                console.log("Next race schedule cache too old, need fresh data.");
+            }
+        } catch (e) {
+            console.log("Error reading next race schedule cache, will fetch fresh data.");
+        }
+    }
+
+    // Otherwise, fetch fresh data
+    const req = new Request(ALLDATA_URL);
+    req.headers = {
+        "User-Agent": `Scriptable: NextF1RaceSchedule/${SCRIPT_VERSION}`
+    };
+    const data = await req.loadJSON();
+
+    // Cache it
+    fm.writeString(
+        cachePath,
+        JSON.stringify({
+            timestamp: nowMs,
+            data
+        })
+    );
+    console.log("Fetched fresh next race schedule data from API.");
+    return data;
 }
 
 /**
