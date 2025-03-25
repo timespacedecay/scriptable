@@ -64,54 +64,44 @@ if (config.runsInApp) {
     menu.title = "F1 Race Schedule";
     menu.message = "Choose an action:";
     menu.addAction("Preview Lock Screen");
+    menu.addAction("Preview HS Small");
     menu.addAction("Preview HS Medium");
     menu.addAction("Preview HS Large");
     menu.addAction("Update Script");
     menu.addCancelAction("Cancel");
-
     const selection = await menu.presentAlert();
-
     let previewWidget;
-
     switch (selection) {
-
-        case 0:
-            // Preview lock screen
+        case 0: // Preview lock screen
             widgetsize.lock = true
-
             previewWidget = await createWidget();
-
             await previewWidget.presentAccessoryRectangular();
-
             break;
-        case 1:
+	case 1: // Preview home screen small
             previewWidget = await createWidget();
-            // Preview home screen medium
+            await previewWidget.presentSmall();
+            break;
+        case 2: // Preview home screen medium
+            previewWidget = await createWidget();
             await previewWidget.presentMedium();
             break;
-        case 2:
-            previewWidget = await createWidget();
-            // Preview home screen large
+        case 3: // Preview home screen large
+            previewWidget = await createWidget();     
             await previewWidget.presentLarge();
             break;
-        case 3:
-            // Update script code
+        case 4: // Update script code  
             await updateScript();
             break;
-        default:
-            // Cancel
+        default: // Cancel
             break;
     }
-
     // If you didn't choose "Set Widget & Exit", let's just end:
     Script.complete();
-} else {
+} else { // Set as the widget
     const widget = await createWidget();
-    // Set as the widget for the Lock Screen
     Script.setWidget(widget);
     Script.complete();
 }
-
 /** 
  * Creates the main F1 schedule widget.
  */
