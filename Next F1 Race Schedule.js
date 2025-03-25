@@ -10,6 +10,7 @@
 // --------------------------------------------------
 const SCRIPT_VERSION = "4.6";
 const DATA_URL = "https://api.jolpi.ca/ergast/f1/current/next.json";
+const ALLDATA_URL = "https://api.jolpi.ca/ergast/f1/current/races.json";
 const RACE_IDX = 0;
 const now = new Date();
 const UPDATE_URL = "https://raw.githubusercontent.com/timespacedecay/scriptable/refs/heads/main/Next%20F1%20Race%20Schedule.js";
@@ -301,46 +302,76 @@ async function getData() {
     }
 }
 
+
 /**
  * Returns ALL RACE data from cache if <1hr old, otherwise fetch with custom headers.
  */
 async function getAllData() {
-    const cachePath = fm.joinPath(fm.cacheDirectory(), "f1AllRaceDataCache.json");
     const nowMs = Date.now();
-    let _rlim = options.refreshLimitInMinutes < 60 ? 60 * 60 * 1000 : options.refreshLimitInMinutes * 60 * 1000
+    const timeMultiplier = 60 * 1000;
+    const cachePath = fm.joinPath(fm.cacheDirectory(), "f1AllRaceDataCache.json");
+    const cacheExists = fm.fileExists(cachePath);
+    const options = getOptions()
+
+    const refreshLimit = options.refreshLimitInMinutes < 60 ? 60 * timeMultiplier : options.refreshLimitInMinutes * timeMultiplier
     // Try reading from cache
-    if (fm.fileExists(cachePath)) {
+    if (cacheExists) {
         try {
-            const cached = JSON.parse(fm.readString(cachePath));
+            const cached = readFromCache(cachePath)
             const ageMs = nowMs - cached.timestamp;
-            if (ageMs < _rlim) { // 1 hour or more
-                console.log("Using cached data for next race schedule.");
+
+            if (ageMs < refreshLimit) { // 1 hour or more
+                console.log("Using cached data");
+
                 return cached.data;
             } else {
-                console.log("Next race schedule cache too old, need fresh data.");
+                console.log("Cache too old, need fresh data");
             }
         } catch (e) {
-            console.log("Error reading next race schedule cache, will fetch fresh data.");
+            console.log("Error reading cache, will fetch fresh data.");
         }
     }
 
     // Otherwise, fetch fresh data
-    const req = new Request(ALLDATA_URL);
-    req.headers = {
-        "User-Agent": `Scriptable: NextF1RaceSchedule/${SCRIPT_VERSION}`
-    };
-    const data = await req.loadJSON();
+    try {
+        const req = new Request(ALLDATA_URL);
 
-    // Cache it
-    fm.writeString(
-        cachePath,
-        JSON.stringify({
-            timestamp: nowMs,
-            data
-        })
-    );
-    console.log("Fetched fresh next race schedule data from API.");
-    return data;
+        req.headers = {
+            "User-Agent": `Scriptable: NextF1RaceSchedule/${SCRIPT_VERSION}`
+        };
+
+        const data = await req.loadJSON();
+
+        // Cache it
+        fm.writeString(
+            cachePath,
+            JSON.stringify({
+                timestamp: nowMs,
+                data
+            })
+        );
+
+        console.log("Fetched fresh data from API");
+
+        return data;
+    } catch (error) {
+        // if we can't fetch data (API error, ot network is down), fallback to cache
+        console.log("Unable to fetch data, will try reading from cache.");
+
+        try {
+            if (!cacheExists) {
+                throw new Error("No cached data available");
+            }
+
+            const cached = readFromCache(cachePath)
+
+            console.log("Using cached data");
+
+            return cached.data
+        } catch (error) {
+            console.error("Unable to fetch data or read from cache: ", error);
+        }
+    }
 }
 
 /**
