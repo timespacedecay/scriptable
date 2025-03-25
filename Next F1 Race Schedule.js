@@ -6,7 +6,7 @@
 // ianperrin for widget parameters. https://github.com/ianperrin
 
 // --------------------------------------------------
-// 1) Constants & Setup - DO NOT EDIT
+// Constants & Setup - DO NOT EDIT
 // --------------------------------------------------
 const SCRIPT_VERSION = "4.5";
 const DATA_URL = "https://api.jolpi.ca/ergast/f1/current/next.json";
@@ -37,84 +37,81 @@ const familyPrms = {
 const family = config.widgetFamily || "accessoryRectangular"
 const defaultPrms = familyPrms[family].split("|")
 // Widget layout options
-const options = {
-    width: parseInt(prms[3] || defaultPrms[3]),
-    font: {
-        header: ["HiraginoSans-W7", parseInt(prms[8] || defaultPrms[8])],
-        title: ["HiraginoSans-W6", parseInt(prms[9] || defaultPrms[9])],
-        body: ["HiraginoSans-W4", parseInt(prms[10] || defaultPrms[10])]
-    },
-    padding: {
-        left: parseInt(prms[4] || defaultPrms[4]),
-        right: parseInt(prms[5] || defaultPrms[5])
-    },
-    spaceBetweenRows: parseInt(prms[6] || defaultPrms[6]),
-    spaceBetweenColumns: parseInt(prms[7] || defaultPrms[7]),
-    locale: parseInt(prms[0] || defaultPrms[0]),
-    timeAMPM: (prms[1] || defaultPrms[1]) == "AMPM",
-    refreshLimitInMinutes: parseInt(prms[2] || defaultPrms[2])
-};
-
+function getOptions() {
+    return {
+        width: parseInt(prms[3] || defaultPrms[3]),
+        font: {
+            header: ["HiraginoSans-W7", parseInt(prms[8] || defaultPrms[8])],
+            title: ["HiraginoSans-W6", parseInt(prms[9] || defaultPrms[9])],
+            body: ["HiraginoSans-W4", parseInt(prms[10] || defaultPrms[10])]
+        },
+        padding: {
+            left: parseInt(prms[4] || defaultPrms[4]),
+            right: parseInt(prms[5] || defaultPrms[5])
+        },
+        spaceBetweenRows: parseInt(prms[6] || defaultPrms[6]),
+        spaceBetweenColumns: parseInt(prms[7] || defaultPrms[7]),
+        //date and time format
+        locale: parseInt(prms[0] || defaultPrms[0]),
+        timeAMPM: (prms[1] || defaultPrms[1]) == "AMPM",
+        //adjustable refresh time (less than 60 is ignored)
+        refreshLimitInMinutes: parseInt(prms[2] || defaultPrms[2])
+    };
+}
 // --------------------------------------------------
 // 2) Build the widget
 // --------------------------------------------------
 const widget = await createWidget();
 
 // --------------------------------------------------
-// 3) Show menu so user can choose what to do
+// Show menu so user can choose what to do
 // --------------------------------------------------
 if (config.runsInApp) {
-const menu = new Alert();
-menu.title = "F1 Race Schedule";
-menu.message = "Choose an action:";
-menu.addAction("Preview Lock Screen");
-menu.addAction("Preview HS Small");
-menu.addAction("Preview HS Medium");
-menu.addAction("Preview HS Large");
-menu.addAction("Set Widget");
-menu.addAction("Update Script");
-menu.addCancelAction("Cancel");
+    const menu = new Alert();
+    menu.title = "F1 Race Schedule";
+    menu.message = "Choose an action:";
+    menu.addAction("Preview Lock Screen");
+    menu.addAction("Preview HS Small");
+    menu.addAction("Preview HS Medium");
+    menu.addAction("Preview HS Large");
+    menu.addAction("Update Script");
+    menu.addCancelAction("Cancel");
 
-const selection = await menu.presentAlert();
-
-switch (selection) {
-    case 0:
-        // Preview lock screen
-        await widget.presentAccessoryRectangular(); 
-        break;
-    case 1:
-        // Preview home screen small
-        await widget.presentSmall();
-        break;
-    case 2:
-        // Preview home screen medium
-        await widget.presentMedium();
-        break;
-    case 3:
-        // Preview home screen large
-        await widget.presentLarge();
-        break;
-    case 4:
-        // Set as the widget for the Lock Screen
-        Script.setWidget(widget);
-        Script.complete();
-        return;
-    case 5:
-        // Update script code
-        await updateScript();
-        break;
-    default:
-        // Cancel
-        break;
+    const selection = await menu.presentAlert();
+    let previewWidget;
+    switch (selection) {
+        case 0: // Preview lock screen
+            widgetsize.lock = true
+            previewWidget = await createWidget();
+            await previewWidget.presentAccessoryRectangular();
+            break;
+        case 1: // Preview home screen small
+            previewWidget = await createWidget();
+            await previewWidget.presentSmall();
+            break;
+        case 2: // Preview home screen medium
+            previewWidget = await createWidget();
+            await previewWidget.presentMedium();
+            break;
+        case 3: // Preview home screen large
+            previewWidget = await createWidget();
+            await previewWidget.presentLarge();
+            break;
+        case 4: // Update script code
+            await updateScript();
+            break;
+        default:
+            // Cancel
+            break;
+    }
+    // If you didn't choose "Set Widget & Exit", let's just end:
+    Script.complete();
+} else { // Set as the widget
+    const widget = await createWidget();
+    Script.setWidget(widget);
+    Script.complete();
 }
 
-// If you didn't choose "Set Widget & Exit", let's just end:
-Script.complete();
-} else {
-    // Set as the widget for the Lock Screen
-        Script.setWidget(widget);
-        Script.complete();
-}
 /** 
  * Creates the main F1 schedule widget.
  */
@@ -127,6 +124,7 @@ async function createWidget() {
     const fp1DateTime = new Date(`${fp1.date}T${fp1.time}`);
     const quali = race.Qualifying;
     const qualiDateTime = new Date(`${quali.date}T${quali.time}`);
+    const options = getOptions()
 
     let sprintOrSP, isSprint = Object.hasOwn(race, "Sprint");
 
@@ -230,20 +228,32 @@ function finished(time) {
     return time < now ? 0.5 : 1;
 }
 
+function readFromCache(cachePath) {
+    const cached = JSON.parse(fm.readString(cachePath));
+
+    return cached;
+}
+
 /**
  * Returns data from cache if <1hr old, otherwise fetch with custom headers.
  */
 async function getData() {
-    const cachePath = fm.joinPath(fm.cacheDirectory(), "f1DataCache.json");
     const nowMs = Date.now();
-    let _rlim = options.refreshLimitInMinutes < 60 ? 60 * 60 * 1000 : options.refreshLimitInMinutes * 60 * 1000
+    const timeMultiplier = 60 * 1000;
+    const cachePath = fm.joinPath(fm.cacheDirectory(), "f1DataCache.json");
+    const cacheExists = fm.fileExists(cachePath);
+    const options = getOptions()
+
+    const refreshLimit = options.refreshLimitInMinutes < 60 ? 60 * timeMultiplier : options.refreshLimitInMinutes * timeMultiplier
     // Try reading from cache
-    if (fm.fileExists(cachePath)) {
+    if (cacheExists) {
         try {
-            const cached = JSON.parse(fm.readString(cachePath));
+            const cached = readFromCache(cachePath)
             const ageMs = nowMs - cached.timestamp;
-            if (ageMs < _rlim) { // 1 hour or more
+
+            if (ageMs < refreshLimit) { // 1 hour or more
                 console.log("Using cached data");
+
                 return cached.data;
             } else {
                 console.log("Cache too old, need fresh data");
@@ -254,43 +264,66 @@ async function getData() {
     }
 
     // Otherwise, fetch fresh data
-    const req = new Request(DATA_URL);
-    req.headers = {
-        "User-Agent": `Scriptable: NextF1RaceSchedule/${SCRIPT_VERSION}`
-    };
-    const data = await req.loadJSON();
+    try {
+        const req = new Request(DATA_URL);
 
-    // Cache it
-    fm.writeString(
-        cachePath,
-        JSON.stringify({
-            timestamp: nowMs,
-            data
-        })
-    );
-    console.log("Fetched fresh data from API");
-    return data;
+        req.headers = {
+            "User-Agent": `Scriptable: NextF1RaceSchedule/${SCRIPT_VERSION}`
+        };
+
+        const data = await req.loadJSON();
+
+        // Cache it
+        fm.writeString(
+            cachePath,
+            JSON.stringify({
+                timestamp: nowMs,
+                data
+            })
+        );
+
+        console.log("Fetched fresh data from API");
+
+        return data;
+    } catch (error) {
+        // if we can't fetch data (API error, ot network is down), fallback to cache
+        console.log("Unable to fetch data, will try reading from cache.");
+
+        try {
+            if (!cacheExists) {
+                throw new Error("No cached data available");
+            }
+
+            const cached = readFromCache(cachePath)
+
+            console.log("Using cached data");
+
+            return cached.data
+        } catch (error) {
+            console.error("Unable to fetch data or read from cache: ", error);
+        }
+    }
 }
 
 /**
  * Format day (e.g. "Mon")
  */
 async function formatSessionDay(sessionDay) {
-    return sessionDay.toLocaleDateString(options.locale, { weekday: "short" });
+    return sessionDay.toLocaleDateString(getOptions().locale, { weekday: "short" });
 }
 
 /**
  * Format date (e.g. "4/15")
  */
 async function formatSessionDate(sessionDate) {
-    return sessionDate.toLocaleDateString(options.locale, { month: "numeric", day: "numeric" });
+    return sessionDate.toLocaleDateString(getOptions().locale, { month: "numeric", day: "numeric" });
 }
 
 /**
  * Format time (e.g. "14:00")
  */
 async function formatSessionTime(sessionTime) {
-    return sessionTime.toLocaleTimeString(options.locale, { hour12: options.timeAMPM, hour: "numeric", minute: "numeric" });
+    return sessionTime.toLocaleTimeString(getOptions().locale, { hour12: getOptions().timeAMPM, hour: "numeric", minute: "numeric" });
 }
 
 /**
