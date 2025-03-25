@@ -79,6 +79,7 @@ if (config.runsInApp) {
             await previewWidget.presentAccessoryRectangular();
             break;
 	case 1: // Preview home screen small
+	    widgetsize.small = true
             previewWidget = await createWidget();
             await previewWidget.presentSmall();
             break;
