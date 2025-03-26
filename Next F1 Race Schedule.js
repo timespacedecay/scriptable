@@ -8,19 +8,69 @@
 // --------------------------------------------------
 // Constants & Setup - DO NOT EDIT
 // --------------------------------------------------
-const SCRIPT_VERSION = "4.6";
+const SCRIPT_VERSION = "4.7";
 const DATA_URL = "https://api.jolpi.ca/ergast/f1/current/next.json";
 const ALLDATA_URL = "https://api.jolpi.ca/ergast/f1/current/races.json";
-const RACE_IDX = 0;
-const now = new Date();
 const UPDATE_URL = "https://raw.githubusercontent.com/timespacedecay/scriptable/refs/heads/main/Next%20F1%20Race%20Schedule.js";
-const widgetsize = {
+
+// Time-related constants
+const MILLISECONDS_IN_SECOND = 60 * 1000;
+const MILLISECONDS_IN_MINUTE = 60 * MILLISECONDS_IN_SECOND;
+const MILLISECONDS_IN_HOUR = 60 * MILLISECONDS_IN_MINUTE;
+const MILLISECONDS_IN_DAY = 24 * MILLISECONDS_IN_HOUR;
+const MINUTES_IN_HOUR = 60;
+const RACE_END_BUFFER = MILLISECONDS_IN_HOUR * 2;
+const DATE_NOW = Date.now();
+
+// Update check constants
+const UPDATE_CHECK_INTERVAL = MILLISECONDS_IN_DAY;
+
+// Widget layout constants
+const WIDGET_LAYOUT = {
+    defaultWidth: 350,
+    smallWidth: 170,
+    lockWidth: 170,
+    font: {
+        header: {
+            family: "HiraginoSans-W7",
+            sizes: { lock: 10, small: 12, default: 22 }
+        },
+        title: {
+            family: "HiraginoSans-W6",
+            sizes: { lock: 9, small: 10, default: 18 }
+        },
+        body: {
+            family: "HiraginoSans-W4",
+            sizes: { lock: 9, small: 10, default: 18 }
+        }
+    },
+    padding: {
+        lock: -4,
+        small: -4,
+        default: -5
+    },
+    spacing: {
+        rows: { lock: 2, small: 10, default: 7.5 },
+        columns: 0
+    }
+};
+
+const RACE_IDX = 0;
+
+const CACHE_FILES = {
+    nextRace: "f1DataCache.json",
+    allRaces: "f1AllRaceDataCache.json",
+    lastUpdateCheck: "lastUpdateCheck.json"
+};
+
+const WIDGET_SIZE = {
     lock: config.widgetFamily === "accessoryRectangular",
     small: config.widgetFamily === "small"
 };
 
 // Paths and file manager
-const scriptPath = module.filename;
+const SCRIPT_PATH = module.filename;
+const SCRIPT_NAME = Script.name();
 const fm = FileManager.local();
 // If you want to store the script in iCloud, you can do:
 // if (fm.isFileStoredIniCloud(scriptPath)) fm = FileManager.iCloud();
@@ -32,28 +82,32 @@ const fm = FileManager.local();
 //    UK date format: en-UK
 //    US date format but AM/PM time: |AMPM
 //    Refresh data every 12 hours instead of every hour (will still fade past sessions, this just sets the interval to check the API for schedule info): ||720
-const prms = (args.widgetParameter || "").split("|");
+const widgetParams = (args.widgetParameter || "").split("|");
 
 // Widget layout options
+/**
+ * Gets widget layout options based on parameters and widget size
+ * @returns {Object} Widget layout options including width, fonts, padding, spacing, and formatting preferences
+ */
 function getOptions() {
     return {
-        width: !!parseInt(prms[3]) ? parseInt(prms[3]) : widgetsize.lock ? 170 : widgetsize.small ? 170 : 350,
+        width: !!parseInt(widgetParams[3]) ? parseInt(widgetParams[3]) : WIDGET_SIZE.lock ? WIDGET_LAYOUT.lockWidth : WIDGET_SIZE.small ? WIDGET_LAYOUT.smallWidth : WIDGET_LAYOUT.defaultWidth,
         font: {
-            header: ["HiraginoSans-W7", !!parseInt(prms[8]) ? parseInt(prms[8]) : widgetsize.lock ? 10 : widgetsize.small ? 12 : 22],
-            title: ["HiraginoSans-W6", !!parseInt(prms[9]) ? parseInt(prms[9]) : widgetsize.lock ? 9 : widgetsize.small ? 10 : 18],
-            body: ["HiraginoSans-W4", !!parseInt(prms[10]) ? parseInt(prms[10]) : widgetsize.lock ? 9 : widgetsize.small ? 10 : 18]
+            header: [WIDGET_LAYOUT.font.header.family, !!parseInt(widgetParams[8]) ? parseInt(widgetParams[8]) : WIDGET_SIZE.lock ? WIDGET_LAYOUT.font.header.sizes.lock : WIDGET_SIZE.small ? WIDGET_LAYOUT.font.header.sizes.small : WIDGET_LAYOUT.font.header.sizes.default],
+            title: [WIDGET_LAYOUT.font.title.family, !!parseInt(widgetParams[9]) ? parseInt(widgetParams[9]) : WIDGET_SIZE.lock ? WIDGET_LAYOUT.font.title.sizes.lock : WIDGET_SIZE.small ? WIDGET_LAYOUT.font.title.sizes.small : WIDGET_LAYOUT.font.title.sizes.default],
+            body: [WIDGET_LAYOUT.font.body.family, !!parseInt(widgetParams[10]) ? parseInt(widgetParams[10]) : WIDGET_SIZE.lock ? WIDGET_LAYOUT.font.body.sizes.lock : WIDGET_SIZE.small ? WIDGET_LAYOUT.font.body.sizes.small : WIDGET_LAYOUT.font.body.sizes.default]
         },
         padding: {
-            left: !!parseInt(prms[4]) ? parseInt(prms[4]) : widgetsize.lock ? -4 : widgetsize.small ? -4 : -5,
-            right: parseInt(prms[5] || widgetsize.lock ? -4 : widgetsize.small ? -4 : -5)
+            left: !!parseInt(widgetParams[4]) ? parseInt(widgetParams[4]) : WIDGET_SIZE.lock ? WIDGET_LAYOUT.padding.lock : WIDGET_SIZE.small ? WIDGET_LAYOUT.padding.small : WIDGET_LAYOUT.padding.default,
+            right: parseInt(widgetParams[5] || WIDGET_SIZE.lock ? WIDGET_LAYOUT.padding.lock : WIDGET_SIZE.small ? WIDGET_LAYOUT.padding.small : WIDGET_LAYOUT.padding.default)
         },
-        spaceBetweenRows: !!parseInt(prms[6]) ? parseInt(prms[6]) : widgetsize.lock ? 2 : widgetsize.small ? 10 : 7.5,
-        spaceBetweenColumns: parseInt(prms[7]) || 0,
+        spaceBetweenRows: !!parseInt(widgetParams[6]) ? parseInt(widgetParams[6]) : WIDGET_SIZE.lock ? WIDGET_LAYOUT.spacing.rows.lock : WIDGET_SIZE.small ? WIDGET_LAYOUT.spacing.rows.small : WIDGET_LAYOUT.spacing.rows.default,
+        spaceBetweenColumns: parseInt(widgetParams[7]) || WIDGET_LAYOUT.spacing.columns,
         //date and time format
-        locale: prms[0] || "en-US",
-        timeAMPM: prms[1] == "AMPM" ? true : false,
+        locale: widgetParams[0] || "en-US",
+        timeAMPM: widgetParams[1] == "AMPM" ? true : false,
         //adjustable refresh time (less than 60 is ignored)
-        refreshLimitInMinutes: parseInt(prms[2] || 60)
+        refreshLimitInMinutes: parseInt(widgetParams[2] || 60)
     };
 }
 
@@ -61,25 +115,33 @@ function getOptions() {
 // Show menu so user can choose what to do
 // --------------------------------------------------
 if (config.runsInApp) {
+    // Check for updates when running in app
+    await checkForUpdates();
+
     const menu = new Alert();
+
     menu.title = "F1 Race Schedule";
     menu.message = "Choose an action:";
+
     menu.addAction("Preview Lock Screen");
     menu.addAction("Preview HS Small");
     menu.addAction("Preview HS Medium");
     menu.addAction("Preview HS Large");
     menu.addAction("Update Script");
     menu.addCancelAction("Cancel");
+
     const selection = await menu.presentAlert();
+
     let previewWidget;
+
     switch (selection) {
         case 0: // Preview lock screen
-            widgetsize.lock = true
+            WIDGET_SIZE.lock = true
             previewWidget = await createWidget();
             await previewWidget.presentAccessoryRectangular();
             break;
-	case 1: // Preview home screen small
-	    widgetsize.small = true
+        case 1: // Preview home screen small
+            WIDGET_SIZE.small = true
             previewWidget = await createWidget();
             await previewWidget.presentSmall();
             break;
@@ -88,7 +150,7 @@ if (config.runsInApp) {
             await previewWidget.presentMedium();
             break;
         case 3: // Preview home screen large
-            previewWidget = await createWidget();     
+            previewWidget = await createWidget();
             await previewWidget.presentLarge();
             break;
         case 4: // Update script code  
@@ -100,79 +162,95 @@ if (config.runsInApp) {
     // If you didn't choose "Set Widget & Exit", let's just end:
     Script.complete();
 } else { // Set as the widget
+    // Check for updates when running as widget
+    await checkForUpdates();
+
     const widget = await createWidget();
     Script.setWidget(widget);
     Script.complete();
 }
+
+/**
+ * Creates a full cache path by joining the cache directory with the filename
+ * @param {string} cacheFilename - The name of the cache file
+ * @returns {string} Full path to the cache file
+ */
+function createCachePath(cacheFilename) {
+    return fm.joinPath(fm.cacheDirectory(), cacheFilename);
+}
+
+/**
+ * Reads data from a cache file
+ * @param {string} cacheFilename - The name of the cache file
+ * @returns {Object} Parsed cache data
+ */
+function readFromCache(cacheFilename) {
+    const cachePath = createCachePath(cacheFilename);
+    const cached = JSON.parse(fm.readString(cachePath));
+    return cached;
+}
+
+/**
+ * Writes data to a cache file
+ * @param {string} cacheFilename - The name of the cache file
+ * @param {Object} data - Data to write to cache
+ */
+function writeCache(cacheFilename, data) {
+    const cachePath = createCachePath(cacheFilename);
+    fm.writeString(cachePath, JSON.stringify(data));
+}
+
+/**
+ * Gets text opacity based on time - past times are dimmed
+ * @param {Date} time - The time to check
+ * @returns {number} Opacity value between 0.5 and 1
+ */
+function getTextOpacity(time) {
+    return time < DATE_NOW ? 0.5 : 1;
+}
+
 /** 
  * Creates the main F1 schedule widget.
  */
 async function createWidget() {
-    const w = new ListWidget();
-    const data = await getData(); // uses caching + headers
-    const alldata = await getAllData(); // uses caching + headers
-    let race = data.MRData.RaceTable.Races[RACE_IDX];
-    let raceDateTimeCheck = new Date(`${race.date}T${race.time}`)
-    let raceRound = race.round
-	if (raceDateTimeCheck + 120 * 60 * 1000 < now) {
-        race = alldata.MRData.RaceTable.Races[raceRound]
+    const listWidget = new ListWidget();
+    const nextRaceData = await getF1Data(
+        DATA_URL,
+        CACHE_FILES.nextRace,
+        (data) => data.MRData.RaceTable.Races[RACE_IDX]
+    );
+    const allRacesData = await getF1Data(
+        ALLDATA_URL,
+        CACHE_FILES.allRaces,
+        (data) => data.MRData.RaceTable.Races
+    );
+    let race = nextRaceData;
+    const raceDateTimeCheck = new Date(`${race.date}T${race.time}`)
+    const raceRound = race.round
+    if (raceDateTimeCheck + RACE_END_BUFFER < DATE_NOW) {
+        race = allRacesData[raceRound]
     }
-    const raceDateTime = new Date(`${race.date}T${race.time}`);
-    const fp1 = race.FirstPractice;
-    const fp1DateTime = new Date(`${fp1.date}T${fp1.time}`);
-    const quali = race.Qualifying;
-    const qualiDateTime = new Date(`${quali.date}T${quali.time}`);
     const options = getOptions()
 
-    let sprintOrSP, isSprint = Object.hasOwn(race, "Sprint");
+    const sessionData = createSessionData(race);
 
-    let dateTime = [];
-    dateTime[0] = {
-        title: "FP1",
-        day: await formatSessionDay(fp1DateTime),
-        date: await formatSessionDate(fp1DateTime),
-        time: await formatSessionTime(fp1DateTime),
-        raw: fp1DateTime
-    };
+    // Render header
+    renderHeader(listWidget, race, options);
 
-    sprintOrSP = isSprint ? race.SprintQualifying : race.SecondPractice;
-    const fp2sprintQDateTime = new Date(`${sprintOrSP.date}T${sprintOrSP.time}`);
-    dateTime[1] = {
-        title: isSprint ? "SQ" : "FP2",
-        day: await formatSessionDay(fp2sprintQDateTime),
-        date: await formatSessionDate(fp2sprintQDateTime),
-        time: await formatSessionTime(fp2sprintQDateTime),
-        raw: fp2sprintQDateTime
-    };
+    // Render body
+    renderBody(listWidget, sessionData, options);
 
-    sprintOrSP = isSprint ? race.Sprint : race.ThirdPractice;
-    const fp3sprintDateTime = new Date(`${sprintOrSP.date}T${sprintOrSP.time}`);
-    dateTime[2] = {
-        title: isSprint ? "SPR" : "FP3",
-        day: await formatSessionDay(fp3sprintDateTime),
-        date: await formatSessionDate(fp3sprintDateTime),
-        time: await formatSessionTime(fp3sprintDateTime),
-        raw: fp3sprintDateTime
-    };
+    return listWidget;
+}
 
-    dateTime[3] = {
-        title: "Quali",
-        day: await formatSessionDay(qualiDateTime),
-        date: await formatSessionDate(qualiDateTime),
-        time: await formatSessionTime(qualiDateTime),
-        raw: qualiDateTime
-    };
-
-    dateTime[4] = {
-        title: "Race",
-        day: await formatSessionDay(raceDateTime),
-        date: await formatSessionDate(raceDateTime),
-        time: await formatSessionTime(raceDateTime),
-        raw: raceDateTime
-    };
-
-    // HEADER
-    const headerStack = w.addStack();
+/**
+ * Renders the header section of the widget
+ * @param {ListWidget} listWidget - The widget to render in
+ * @param {Object} race - The race data
+ * @param {Object} options - Widget layout options
+ */
+function renderHeader(listWidget, race, options) {
+    const headerStack = listWidget.addStack();
     const headerText = race.raceName.toUpperCase();
     const headerCell = headerStack.addStack();
     headerCell.size = new Size(options.width, 0);
@@ -184,29 +262,36 @@ async function createWidget() {
     textElement.lineLimit = 1;
 
     headerCell.addSpacer();
-    w.addSpacer(options.spaceBetweenRows);
+    listWidget.addSpacer(options.spaceBetweenRows);
+}
 
-    // BODY
-    let body = w.addStack();
+/**
+ * Renders the body section of the widget
+ * @param {ListWidget} listWidget - The widget to render in
+ * @param {Array} sessionData - Array of session data
+ * @param {Object} options - Widget layout options
+ */
+function renderBody(listWidget, sessionData, options) {
+    const body = listWidget.addStack();
     body.size = new Size(options.width, 0);
 
-    for (let column = 0; column < dateTime.length; column++) {
-        let currentColumn = body.addStack();
+    for (let column = 0; column < sessionData.length; column++) {
+        const currentColumn = body.addStack();
         currentColumn.layoutVertically();
         currentColumn.setPadding(0, options.padding.left, 0, options.padding.right);
 
-        for (let row in dateTime[column]) {
+        for (let row in sessionData[column]) {
             if (row === "raw") continue;
-            let currentCell = currentColumn.addStack();
+            const currentCell = currentColumn.addStack();
             currentCell.addSpacer();
 
-            let cellText = currentCell.addText(dateTime[column][row]);
+            const cellText = currentCell.addText(sessionData[column][row]);
             cellText.font = (row === "title")
                 ? new Font(...options.font.title)
                 : new Font(...options.font.body);
 
             // Gray out past sessions
-            cellText.textOpacity = finished(dateTime[column].raw);
+            cellText.textOpacity = getTextOpacity(sessionData[column].raw);
             cellText.lineLimit = 1;
             cellText.minimumScaleFactor = 0.5;
 
@@ -215,44 +300,91 @@ async function createWidget() {
         }
         currentColumn.addSpacer(options.spaceBetweenColumns);
     }
-
-    return w;
 }
 
 /**
- * Lower opacity for past times, full for future times.
+ * Creates session data array for the widget
+ * @param {Object} race - The race data object containing all session times
+ * @returns {Array} Array of session data with formatted times and dates
  */
-function finished(time) {
-    return time < now ? 0.5 : 1;
-}
+function createSessionData(race) {
+    const raceDateTime = new Date(`${race.date}T${race.time}`);
+    const fp1 = race.FirstPractice;
+    const fp1DateTime = new Date(`${fp1.date}T${fp1.time}`);
+    const quali = race.Qualifying;
+    const qualiDateTime = new Date(`${quali.date}T${quali.time}`);
+    const isSprint = Object.hasOwn(race, "Sprint");
 
-function readFromCache(cachePath) {
-    const cached = JSON.parse(fm.readString(cachePath));
+    const dateTime = [];
+    dateTime[0] = {
+        title: "FP1",
+        day: formatSessionDay(fp1DateTime),
+        date: formatSessionDate(fp1DateTime),
+        time: formatSessionTime(fp1DateTime),
+        raw: fp1DateTime
+    };
 
-    return cached;
+    let sprintOrSP = isSprint ? race.SprintQualifying : race.SecondPractice;
+    const fp2sprintQDateTime = new Date(`${sprintOrSP.date}T${sprintOrSP.time}`);
+    dateTime[1] = {
+        title: isSprint ? "SQ" : "FP2",
+        day: formatSessionDay(fp2sprintQDateTime),
+        date: formatSessionDate(fp2sprintQDateTime),
+        time: formatSessionTime(fp2sprintQDateTime),
+        raw: fp2sprintQDateTime
+    };
+
+    sprintOrSP = isSprint ? race.Sprint : race.ThirdPractice;
+    const fp3sprintDateTime = new Date(`${sprintOrSP.date}T${sprintOrSP.time}`);
+    dateTime[2] = {
+        title: isSprint ? "SPR" : "FP3",
+        day: formatSessionDay(fp3sprintDateTime),
+        date: formatSessionDate(fp3sprintDateTime),
+        time: formatSessionTime(fp3sprintDateTime),
+        raw: fp3sprintDateTime
+    };
+
+    dateTime[3] = {
+        title: "Quali",
+        day: formatSessionDay(qualiDateTime),
+        date: formatSessionDate(qualiDateTime),
+        time: formatSessionTime(qualiDateTime),
+        raw: qualiDateTime
+    };
+
+    dateTime[4] = {
+        title: "Race",
+        day: formatSessionDay(raceDateTime),
+        date: formatSessionDate(raceDateTime),
+        time: formatSessionTime(raceDateTime),
+        raw: raceDateTime
+    };
+
+    return dateTime;
 }
 
 /**
- * Returns data from cache if <1hr old, otherwise fetch with custom headers.
+ * Returns F1 data from cache if fresh enough, otherwise fetches from API
+ * @param {string} url - The API endpoint URL to fetch from
+ * @param {string} cacheFilename - The name of the cache file to use
+ * @param {Function} picker - Function to extract specific data from the response
+ * @returns {Promise<Object>} The F1 data
  */
-async function getData() {
+async function getF1Data(url, cacheFilename, picker = (data) => data) {
     const nowMs = Date.now();
-    const timeMultiplier = 60 * 1000;
-    const cachePath = fm.joinPath(fm.cacheDirectory(), "f1DataCache.json");
-    const cacheExists = fm.fileExists(cachePath);
+    const cached = readFromCache(cacheFilename)
     const options = getOptions()
 
-    const refreshLimit = options.refreshLimitInMinutes < 60 ? 60 * timeMultiplier : options.refreshLimitInMinutes * timeMultiplier
-    // Try reading from cache
-    if (cacheExists) {
+    const refreshLimit = options.refreshLimitInMinutes < MINUTES_IN_HOUR ? MILLISECONDS_IN_HOUR : options.refreshLimitInMinutes * MILLISECONDS_IN_MINUTE
+    // Try reading from cache, intentiaonal not strict equality check (null || undefined)
+    if (cached == null) {
         try {
-            const cached = readFromCache(cachePath)
             const ageMs = nowMs - cached.timestamp;
 
             if (ageMs < refreshLimit) { // 1 hour or more
                 console.log("Using cached data");
 
-                return cached.data;
+                return picker(cached.data);
             } else {
                 console.log("Cache too old, need fresh data");
             }
@@ -263,7 +395,7 @@ async function getData() {
 
     // Otherwise, fetch fresh data
     try {
-        const req = new Request(DATA_URL);
+        const req = new Request(url);
 
         req.headers = {
             "User-Agent": `Scriptable: NextF1RaceSchedule/${SCRIPT_VERSION}`
@@ -272,103 +404,24 @@ async function getData() {
         const data = await req.loadJSON();
 
         // Cache it
-        fm.writeString(
-            cachePath,
-            JSON.stringify({
-                timestamp: nowMs,
-                data
-            })
-        );
+        writeCache(cacheFilename, {
+            timestamp: nowMs,
+            data
+        });
 
         console.log("Fetched fresh data from API");
 
-        return data;
+        return picker(data);
     } catch (error) {
         // if we can't fetch data (API error, ot network is down), fallback to cache
         console.log("Unable to fetch data, will try reading from cache.");
 
         try {
-            if (!cacheExists) {
-                throw new Error("No cached data available");
-            }
-
-            const cached = readFromCache(cachePath)
+            const cached = readFromCache(cacheFilename)
 
             console.log("Using cached data");
 
-            return cached.data
-        } catch (error) {
-            console.error("Unable to fetch data or read from cache: ", error);
-        }
-    }
-}
-
-
-/**
- * Returns ALL RACE data from cache if <1hr old, otherwise fetch with custom headers.
- */
-async function getAllData() {
-    const nowMs = Date.now();
-    const timeMultiplier = 60 * 1000;
-    const cachePath = fm.joinPath(fm.cacheDirectory(), "f1AllRaceDataCache.json");
-    const cacheExists = fm.fileExists(cachePath);
-    const options = getOptions()
-
-    const refreshLimit = options.refreshLimitInMinutes < 60 ? 60 * timeMultiplier : options.refreshLimitInMinutes * timeMultiplier
-    // Try reading from cache
-    if (cacheExists) {
-        try {
-            const cached = readFromCache(cachePath)
-            const ageMs = nowMs - cached.timestamp;
-
-            if (ageMs < refreshLimit) { // 1 hour or more
-                console.log("Using cached data");
-
-                return cached.data;
-            } else {
-                console.log("Cache too old, need fresh data");
-            }
-        } catch (e) {
-            console.log("Error reading cache, will fetch fresh data.");
-        }
-    }
-
-    // Otherwise, fetch fresh data
-    try {
-        const req = new Request(ALLDATA_URL);
-
-        req.headers = {
-            "User-Agent": `Scriptable: NextF1RaceSchedule/${SCRIPT_VERSION}`
-        };
-
-        const data = await req.loadJSON();
-
-        // Cache it
-        fm.writeString(
-            cachePath,
-            JSON.stringify({
-                timestamp: nowMs,
-                data
-            })
-        );
-
-        console.log("Fetched fresh data from API");
-
-        return data;
-    } catch (error) {
-        // if we can't fetch data (API error, ot network is down), fallback to cache
-        console.log("Unable to fetch data, will try reading from cache.");
-
-        try {
-            if (!cacheExists) {
-                throw new Error("No cached data available");
-            }
-
-            const cached = readFromCache(cachePath)
-
-            console.log("Using cached data");
-
-            return cached.data
+            return picker(cached.data)
         } catch (error) {
             console.error("Unable to fetch data or read from cache: ", error);
         }
@@ -376,37 +429,99 @@ async function getAllData() {
 }
 
 /**
- * Format day (e.g. "Mon")
+ * Formats a date to show the day of the week (e.g. "Mon")
+ * @param {Date} sessionDay - The date to format
+ * @returns {string} Formatted day string
  */
-async function formatSessionDay(sessionDay) {
+function formatSessionDay(sessionDay) {
     return sessionDay.toLocaleDateString(getOptions().locale, { weekday: "short" });
 }
 
 /**
- * Format date (e.g. "4/15")
+ * Formats a date to show month and day (e.g. "4/15")
+ * @param {Date} sessionDate - The date to format
+ * @returns {string} Formatted date string
  */
-async function formatSessionDate(sessionDate) {
+function formatSessionDate(sessionDate) {
     return sessionDate.toLocaleDateString(getOptions().locale, { month: "numeric", day: "numeric" });
 }
 
 /**
- * Format time (e.g. "14:00")
+ * Formats a time according to user preferences (12/24 hour)
+ * @param {Date} sessionTime - The time to format
+ * @returns {string} Formatted time string
  */
-async function formatSessionTime(sessionTime) {
+function formatSessionTime(sessionTime) {
     return sessionTime.toLocaleTimeString(getOptions().locale, { hour12: getOptions().timeAMPM, hour: "numeric", minute: "numeric" });
 }
 
 /**
- * ---------------------------------------------------------------
- * "Update Code" - Overwrite the current script with the one
- * hosted at UPDATE_URL.
- * ---------------------------------------------------------------
+ * Checks for script updates and shows a notification if a newer version is available
+ * @returns {Promise<void>}
+ */
+async function checkForUpdates() {
+    let lastCheckData = { timestamp: 0, lastNotifiedVersion: SCRIPT_VERSION };
+    
+    try {
+        const cached = readFromCache(CACHE_FILES.lastUpdateCheck);
+        if (cached) {
+            lastCheckData = cached;
+        }
+    } catch (e) {
+        console.log("No valid last check data found, will check for updates");
+    }
+
+    // Only check once per day
+    if (DATE_NOW - lastCheckData.timestamp < UPDATE_CHECK_INTERVAL) {
+        return;
+    }
+
+    try {
+        const req = new Request(UPDATE_URL);
+        const newCode = await req.loadString();
+
+        // Extract version from the new code
+        const versionMatch = newCode.match(/const SCRIPT_VERSION = "([^"]+)"/);
+        if (!versionMatch) {
+            console.log("Could not find version in new code");
+            return;
+        }
+
+        const newVersion = versionMatch[1];
+        const currentVersion = SCRIPT_VERSION;
+
+        // Compare versions and check if we've already notified about this version
+        if (newVersion > currentVersion && newVersion !== lastCheckData.lastNotifiedVersion) {
+            const notification = new Notification();
+            notification.title = "F1 Race Schedule Update Available";
+            notification.body = `Version ${newVersion} is available. Current version: ${currentVersion}`;
+            notification.sound = "default";
+
+            // Add action to update the script
+            notification.openURL = URLScheme.forRunningScript()
+
+            await notification.schedule();
+            
+            // Update last notified version
+            lastCheckData.lastNotifiedVersion = newVersion;
+        }
+
+        // Update last check timestamp
+        lastCheckData.timestamp = DATE_NOW;
+        writeCache(CACHE_FILES.lastUpdateCheck, lastCheckData);
+    } catch (error) {
+        console.error("Failed to check for updates:", error);
+    }
+}
+
+/**
+ * Updates the script with the latest version from the update URL
+ * @returns {Promise<void>}
  */
 async function updateScript() {
     const alert = new Alert();
-    const scriptName = scriptPath.split("/").pop();
 
-    alert.title = `Update "${scriptName}" code?`;
+    alert.title = `Update "${SCRIPT_NAME}" code?`;
     alert.message = "This will overwrite your local changes!";
     alert.addCancelAction("No");
     alert.addDestructiveAction("Yes, overwrite");
@@ -418,10 +533,11 @@ async function updateScript() {
     }
 
     let updateMessage;
+
     try {
         const req = new Request(UPDATE_URL);
         const newCode = await req.loadString();
-        fm.writeString(scriptPath, newCode);
+        fm.writeString(SCRIPT_PATH, newCode);
         updateMessage = "Code updated. Close & reopen the script to see changes.";
     } catch (error) {
         updateMessage = `Update failed. ${error}`;
