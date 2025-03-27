@@ -8,13 +8,13 @@
 // --------------------------------------------------
 // Constants & Setup - DO NOT EDIT
 // --------------------------------------------------
-const SCRIPT_VERSION = "4.7";
+const SCRIPT_VERSION = "4.8";
 const DATA_URL = "https://api.jolpi.ca/ergast/f1/current/next.json";
 const ALLDATA_URL = "https://api.jolpi.ca/ergast/f1/current/races.json";
 const UPDATE_URL = "https://raw.githubusercontent.com/timespacedecay/scriptable/refs/heads/main/Next%20F1%20Race%20Schedule.js";
 
 // Time-related constants
-const MILLISECONDS_IN_SECOND = 60 * 1000;
+const MILLISECONDS_IN_SECOND = 1000;
 const MILLISECONDS_IN_MINUTE = 60 * MILLISECONDS_IN_SECOND;
 const MILLISECONDS_IN_HOUR = 60 * MILLISECONDS_IN_MINUTE;
 const MILLISECONDS_IN_DAY = 24 * MILLISECONDS_IN_HOUR;
