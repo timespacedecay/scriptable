@@ -377,7 +377,7 @@ async function getF1Data(url, cacheFilename, picker = (data) => data) {
 
     const refreshLimit = options.refreshLimitInMinutes < MINUTES_IN_HOUR ? MILLISECONDS_IN_HOUR : options.refreshLimitInMinutes * MILLISECONDS_IN_MINUTE
     // Try reading from cache, intentiaonal not strict equality check (null || undefined)
-    if (!(cached == null)) {
+    if (cached != null) {
         try {
             const ageMs = nowMs - cached.timestamp;
 
