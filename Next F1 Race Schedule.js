@@ -8,7 +8,7 @@
 // --------------------------------------------------
 // Constants & Setup - DO NOT EDIT
 // --------------------------------------------------
-const SCRIPT_VERSION = "4.8";
+const SCRIPT_VERSION = "4.8.1";
 const DATA_URL = "https://api.jolpi.ca/ergast/f1/current/next.json";
 const ALLDATA_URL = "https://api.jolpi.ca/ergast/f1/current/races.json";
 const UPDATE_URL = "https://raw.githubusercontent.com/timespacedecay/scriptable/refs/heads/main/Next%20F1%20Race%20Schedule.js";
@@ -377,7 +377,7 @@ async function getF1Data(url, cacheFilename, picker = (data) => data) {
 
     const refreshLimit = options.refreshLimitInMinutes < MINUTES_IN_HOUR ? MILLISECONDS_IN_HOUR : options.refreshLimitInMinutes * MILLISECONDS_IN_MINUTE
     // Try reading from cache, intentiaonal not strict equality check (null || undefined)
-    if (cached == null) {
+    if (!(cached == null)) {
         try {
             const ageMs = nowMs - cached.timestamp;
 
@@ -391,9 +391,7 @@ async function getF1Data(url, cacheFilename, picker = (data) => data) {
         } catch (e) {
             console.log("Error reading cache, will fetch fresh data.");
         }
-    }
-
-    // Otherwise, fetch fresh data
+    } else { // Otherwise, fetch fresh data
     try {
         const req = new Request(url);
 
@@ -424,6 +422,7 @@ async function getF1Data(url, cacheFilename, picker = (data) => data) {
             return picker(cached.data)
         } catch (error) {
             console.error("Unable to fetch data or read from cache: ", error);
+            }
         }
     }
 }
