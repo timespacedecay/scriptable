@@ -391,7 +391,9 @@ async function getF1Data(url, cacheFilename, picker = (data) => data) {
         } catch (e) {
             console.log("Error reading cache, will fetch fresh data.");
         }
-    } else { // Otherwise, fetch fresh data
+    }
+    
+    // Otherwise, fetch fresh data
     try {
         const req = new Request(url);
 
@@ -422,7 +424,6 @@ async function getF1Data(url, cacheFilename, picker = (data) => data) {
             return picker(cached.data)
         } catch (error) {
             console.error("Unable to fetch data or read from cache: ", error);
-            }
         }
     }
 }
