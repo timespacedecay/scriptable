@@ -8,7 +8,7 @@
 // --------------------------------------------------
 // Constants & Setup - DO NOT EDIT
 // --------------------------------------------------
-const SCRIPT_VERSION = "4.9";
+const SCRIPT_VERSION = "5.0";
 const DATA_URL = "https://api.jolpi.ca/ergast/f1/current/next.json";
 const ALLDATA_URL = "https://api.jolpi.ca/ergast/f1/current/races.json";
 const UPDATE_URL = "https://raw.githubusercontent.com/timespacedecay/scriptable/refs/heads/main/Next%20F1%20Race%20Schedule.js";
@@ -19,7 +19,7 @@ const MILLISECONDS_IN_MINUTE = 60 * MILLISECONDS_IN_SECOND;
 const MILLISECONDS_IN_HOUR = 60 * MILLISECONDS_IN_MINUTE;
 const MILLISECONDS_IN_DAY = 24 * MILLISECONDS_IN_HOUR;
 const MINUTES_IN_HOUR = 60;
-const RACE_END_BUFFER = MILLISECONDS_IN_HOUR * 2;
+const RACE_END_BUFFER = MILLISECONDS_IN_HOUR * 1.5;
 const DATE_NOW = Date.now();
 
 // Update check constants
@@ -225,7 +225,7 @@ async function createWidget() {
         (data) => data.MRData.RaceTable.Races
     );
     let race = nextRaceData;
-    const raceDateTimeCheck = new Date(`${race.date}T${race.time}`)
+    const raceDateTimeCheck = new Date(`${race.date}T${race.time}`).getTime()
     const raceRound = race.round
     if (raceDateTimeCheck + RACE_END_BUFFER < DATE_NOW) {
         race = allRacesData[raceRound]
