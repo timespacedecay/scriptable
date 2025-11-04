@@ -400,6 +400,7 @@ async function getF1Data(url, cacheFilename, picker = (data) => data) {
         req.headers = {
             "User-Agent": `Scriptable: NextF1RaceSchedule/${SCRIPT_VERSION}`
         };
+        req.timeoutInterval = 10; // 10 second timeout
 
         const data = await req.loadJSON();
 
