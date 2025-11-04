@@ -8,7 +8,7 @@
 // --------------------------------------------------
 // Constants & Setup - DO NOT EDIT
 // --------------------------------------------------
-const SCRIPT_VERSION = "5.0";
+const SCRIPT_VERSION = "5.1";
 const DATA_URL = "https://api.jolpi.ca/ergast/f1/current/next.json";
 const ALLDATA_URL = "https://api.jolpi.ca/ergast/f1/current/races.json";
 const UPDATE_URL = "https://raw.githubusercontent.com/timespacedecay/scriptable/refs/heads/main/Next%20F1%20Race%20Schedule.js";
@@ -372,34 +372,38 @@ function createSessionData(race) {
  */
 async function getF1Data(url, cacheFilename, picker = (data) => data) {
     const nowMs = Date.now();
-    const cached = readFromCache(cacheFilename)
-    const options = getOptions()
+    const options = getOptions();
+    const refreshLimit = options.refreshLimitInMinutes < MINUTES_IN_HOUR 
+        ? MILLISECONDS_IN_HOUR 
+        : options.refreshLimitInMinutes * MILLISECONDS_IN_MINUTE;
+    
+    // Try reading from cache once at the beginning
+    let cached = null;
+    try {
+        cached = readFromCache(cacheFilename);
+    } catch (e) {
+        console.log("No cache found or cache unreadable");
+    }
 
-    const refreshLimit = options.refreshLimitInMinutes < MINUTES_IN_HOUR ? MILLISECONDS_IN_HOUR : options.refreshLimitInMinutes * MILLISECONDS_IN_MINUTE
-    // Try reading from cache, intentiaonal not strict equality check (null || undefined)
+    // Check if cached data is fresh enough
     if (cached != null) {
-        try {
-            const ageMs = nowMs - cached.timestamp;
-
-            if (ageMs < refreshLimit) { // 1 hour or more
-                console.log("Using cached data");
-
-                return picker(cached.data);
-            } else {
-                console.log("Cache too old, need fresh data");
-            }
-        } catch (e) {
-            console.log("Error reading cache, will fetch fresh data.");
+        const ageMs = nowMs - cached.timestamp;
+        if (ageMs < refreshLimit) {
+            console.log("Using cached data");
+            return picker(cached.data);
+        } else {
+            console.log("Cache too old, need fresh data");
         }
     }
     
-    // Otherwise, fetch fresh data
+    // Try to fetch fresh data
     try {
         const req = new Request(url);
-
         req.headers = {
             "User-Agent": `Scriptable: NextF1RaceSchedule/${SCRIPT_VERSION}`
         };
+
+        req.timeoutInterval = 10; // 10 second timeout
 
         const data = await req.loadJSON();
 
@@ -410,20 +414,17 @@ async function getF1Data(url, cacheFilename, picker = (data) => data) {
         });
 
         console.log("Fetched fresh data from API");
-
         return picker(data);
     } catch (error) {
-        // if we can't fetch data (API error, ot network is down), fallback to cache
-        console.log("Unable to fetch data, will try reading from cache.");
-
-        try {
-            const cached = readFromCache(cacheFilename)
-
-            console.log("Using cached data");
-
-            return picker(cached.data)
-        } catch (error) {
-            console.error("Unable to fetch data or read from cache: ", error);
+        console.error("Unable to fetch fresh data:", error);
+        
+        // Fallback to stale cache if it exists
+        if (cached != null) {
+            console.log("Using stale cached data as fallback");
+            return picker(cached.data);
+        } else {
+            // No cache available at all
+            throw new Error("Unable to fetch data and no cache available");
         }
     }
 }
